@@ -7,5 +7,11 @@
         public string? Message { get; set; }
         public int? code { get; set; }
 
-}
+
+        public static ApiResponse<T> SuccessResponse(T data, string message = "Success")
+        => new ApiResponse<T> { Success = true, Data = data, Message = message };
+
+        public static ApiResponse<T> FailResponse(string message)
+            => new ApiResponse<T> { Success = false, Message = message };
+    }
 }

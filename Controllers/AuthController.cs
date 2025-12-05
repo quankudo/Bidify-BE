@@ -1,4 +1,6 @@
-﻿using bidify_be.DTOs.Auth;
+﻿using bidify_be.Domain.Contracts;
+using bidify_be.DTOs.Auth;
+using bidify_be.DTOs.Users;
 using bidify_be.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,50 +21,112 @@ namespace bidify_be.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
+        public async Task<ActionResult<ApiResponse<UserRegisterResponse>>> Register([FromBody] UserRegisterRequest request)
         {
             var response = await _userService.RegisterAsync(request);
-            return Ok(response);
+            return Ok(ApiResponse<UserRegisterResponse>.SuccessResponse(
+                response, "User registered successfully"
+            ));
         }
+
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] UserLoginRequest request)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> Login([FromBody] UserLoginRequest request)
         {
             var response = await _userService.LoginAsync(request);
-            return Ok(response);
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(
+                response, "Login successful"
+            ));
         }
 
         [HttpPost("verify-email")]
         [AllowAnonymous]
-        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> VerifyEmail([FromBody] VerifyEmailRequest request)
         {
-            var response = await _userService.VerifyEmail(request);
-            return Ok(response);
+            await _userService.VerifyEmail(request);
+
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                true,
+                "Email verified successfully"
+            ));
         }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<bool>>> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            await _userService.ChangePassword(request);
+
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                true,
+                "Change password successfully"
+            ));
+
+        }
+
+        [HttpPost("forget-password")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<bool>>> ForgetPassword([FromBody] ForgetPasswordRequest request)
+        {
+            await _userService.ForgetPassword(request);
+
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                true,
+                "Reset password successfully. Please check your email."
+            ));
+        }
+
 
         [HttpPost("resend-code")]
         [AllowAnonymous]
-        public async Task<IActionResult> ResendCode([FromBody] ResendCodeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> ResendCode([FromBody] ResendCodeRequest request)
         {
-            var response = await _userService.ResendVerifyCode(request);
-            return Ok(response);
+            await _userService.ResendVerifyCode(request);
+
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                true,
+                "Verification code resent successfully"
+            ));
         }
+
 
         [HttpGet("user/{id}")]
         [Authorize]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> GetById(Guid id)
         {
-            var response = await _userService.GetByIdAsync(id);
-            return Ok(response);
+            var user = await _userService.GetByIdAsync(id);
+
+            if (user == null)
+            {
+                return NotFound(ApiResponse<UserResponse>.FailResponse(
+                    "User not found"
+                ));
+            }
+
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(
+                user,
+                "User retrieved successfully"
+            ));
         }
 
         [HttpPost("refresh-token")]
         [Authorize]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        public async Task<ActionResult<ApiResponse<RefreshTokenResponse>>> RefreshToken([FromBody] RefreshTokenRequest request)
         {
-            var response = await _userService.RefreshTokenAsync(request);
-            return Ok(response);
+            var result = await _userService.RefreshTokenAsync(request);
+
+            if (result == null)
+            {
+                return BadRequest(ApiResponse<RefreshTokenResponse>.FailResponse(
+                    "Invalid or expired refresh token"
+                ));
+            }
+
+            return Ok(ApiResponse<RefreshTokenResponse>.SuccessResponse(
+                result,
+                "Token refreshed successfully"
+            ));
         }
 
 

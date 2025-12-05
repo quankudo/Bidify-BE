@@ -1,0 +1,72 @@
+﻿@using bidify_be.Domain.Contracts
+@model ReferralRewardEmailModel
+
+<div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:0; background:#ffffff;">
+
+    <!-- Header -->
+    <div style="
+        background:#4CAF50;
+        color:#ffffff;
+        padding:30px 20px;
+        text-align:center;
+        border-radius:12px 12px 0 0;
+        box-shadow:0 4px 12px rgba(0,0,0,0.12);
+    ">
+        <h1 style="margin:0; font-size:26px; font-weight:600;">
+            🎉 Chúc mừng bạn đã nhận thưởng!
+        </h1>
+        <p style="margin-top:8px; font-size:15px; opacity:0.95;">
+            Cảm ơn bạn đã chia sẻ và giới thiệu dịch vụ của chúng tôi.
+        </p>
+    </div>
+
+    <!-- Body -->
+    <div style="
+        padding:32px 22px 38px;
+        border:1px solid #ececec;
+        border-top:none;
+        border-radius:0 0 12px 12px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.04);
+        background:#ffffff;
+    ">
+
+        <h2 style="color:#4CAF50; margin-top:0; font-size:22px;">
+            Xin chào @Model.ReferrerName,
+        </h2>
+
+        <p style="font-size:16px; color:#333; line-height:1.5;">
+            Người dùng <strong>@Model.NewUserName</strong> đã nhập mã giới thiệu của bạn.
+            Như một lời cảm ơn cho sự đóng góp của bạn, chúng tôi xin gửi tặng:
+        </p>
+
+        <!-- Reward Box -->
+        <div style="
+            margin:30px auto;
+            max-width:300px;
+            background:#f7fff8;
+            border:2px solid #4CAF50;
+            border-radius:12px;
+            padding:18px;
+            text-align:center;
+            box-shadow:0 3px 8px rgba(0,0,0,0.08);
+        ">
+            <p style="font-size:18px; margin:0; color:#4CAF50;">
+                🎁 Bạn vừa nhận được
+            </p>
+            <h1 style="font-size:42px; margin:10px 0 0; color:#2e2e2e;">
+                @Model.RewardBids Bids
+            </h1>
+        </div>
+
+        <p style="font-size:16px; color:#333; margin-top:28px;">
+            Hãy tiếp tục giới thiệu bạn bè để nhận thêm nhiều phần quà hấp dẫn hơn nữa!
+        </p>
+
+        <hr style="margin:30px 0; border:none; border-top:1px solid #eee;" />
+
+        <p style="font-size:14px; color:#666; line-height:1.5;">
+            Nếu bạn có bất kỳ câu hỏi nào, đừng ngần ngại liên hệ đội ngũ hỗ trợ của chúng tôi.
+        </p>
+    </div>
+
+</div>

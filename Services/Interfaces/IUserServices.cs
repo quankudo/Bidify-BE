@@ -8,15 +8,19 @@ namespace bidify_be.Services.Interfaces
         Task<UserRegisterResponse> RegisterAsync(UserRegisterRequest request);
         Task<CurrentUserResponse> GetCurrentUserAsync();
         Task<UserResponse> GetByIdAsync(Guid id);
-        Task<UserResponse> UpdateAsync(Guid id, UpdateUserRequest request);
+        Task<UserResponse> UpdateAsync(UpdateUserRequest request);
         Task DeleteAsync(Guid id);
         Task<RevokeRefreshTokenResponse> RevokeRefreshToken(RefreshTokenRequest refreshTokenRemoveRequest);
-        Task<CurrentUserResponse> RefreshTokenAsync(RefreshTokenRequest request);
+        Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request);
 
         Task<UserResponse> LoginAsync(UserLoginRequest request);
 
-        Task<bool> VerifyEmail(VerifyEmailRequest user);
+        Task VerifyEmail(VerifyEmailRequest user);
 
-        Task<string> ResendVerifyCode(ResendCodeRequest request);
+        Task ResendVerifyCode(ResendCodeRequest request);
+
+        Task ChangePassword(ChangePasswordRequest request);
+
+        Task ForgetPassword(ForgetPasswordRequest request);
     }
 }

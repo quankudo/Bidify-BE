@@ -5,6 +5,7 @@
         public Guid Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
+        public int BidCount { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Gender { get; set; }
         public string? AccessToken { get; set; }

@@ -5,7 +5,6 @@
         public Guid Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public string VerifyCode { get; set; }
         public DateTime ExpireVerifyCode { get; set; }
     }
 }
