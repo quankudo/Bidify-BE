@@ -9,6 +9,18 @@ namespace bidify_be.Domain.Enums
 
         [Description("PRODUCT_NOT_FOUND")]
         ProductNotFound,
+        
+        [Description("CATEGORY_NOT_FOUND")]
+        CategoryNotFound,
+
+        [Description("TAG_NOT_FOUND")]
+        TagNotFound,
+
+        [Description("ADDRESS_NOT_FOUND")]
+        AddressNotFound,
+
+        [Description("PACKAGE_BID_NOT_FOUND")]
+        PackageBidNotFound,
 
         [Description("VALIDATION_FAILED")]
         ValidationFailed,

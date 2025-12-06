@@ -22,5 +22,7 @@ namespace bidify_be.Domain.Entities
         public string? ReferredBy { get; set; }
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdateAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Address> Addresses { get; set; } = new List<Address>();
     }
 }

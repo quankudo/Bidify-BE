@@ -7,11 +7,18 @@ namespace bidify_be.Infrastructure.UnitOfWork
     {
         private readonly ApplicationDbContext _context;
         public ICategoryRepository Categories { get; }
+        public IPackageBidRepository PackageBids { get; }
 
-        public UnitOfWork(ApplicationDbContext context, ICategoryRepository categories)
+        public ITagRepository TagRepository { get; }
+        public IAddressRepository Addresses { get; }
+
+        public UnitOfWork(ApplicationDbContext context, ICategoryRepository categories, IPackageBidRepository packageBids, ITagRepository tagRepository, IAddressRepository addresses)
         {
             _context = context;
             Categories = categories;
+            PackageBids = packageBids;
+            TagRepository = tagRepository;
+            Addresses = addresses;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

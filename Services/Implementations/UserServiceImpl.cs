@@ -64,9 +64,6 @@ namespace bidify_be.Services.Implementations
             var validationResult = await _validatorRegister.ValidateAsync(request);
             ValidationHelper.ThrowIfInvalid(validationResult, _logger);
 
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
                 throw new InvalidOperationException("Email already exists");

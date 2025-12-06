@@ -17,11 +17,35 @@ namespace bidify_be.Exceptions
             ErrorCodeString = errorCode.GetDescription();
         }
     }
-
+    
 
     public class UserNotFoundException : AppException
     {
         public UserNotFoundException(string message, ErrorCode errorCode = ErrorCode.UserNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class AddressNotFoundException : AppException
+    {
+        public AddressNotFoundException(string message, ErrorCode errorCode = ErrorCode.AddressNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class TagNotFoundException : AppException
+    {
+        public TagNotFoundException(string message, ErrorCode errorCode = ErrorCode.TagNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class PackageBidNotFoundException : AppException
+    {
+        public PackageBidNotFoundException(string message, ErrorCode errorCode = ErrorCode.PackageBidNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class CategoryNotFoundException : AppException
+    {
+        public CategoryNotFoundException(string message, ErrorCode errorCode = ErrorCode.CategoryNotFound)
             : base(message, 404, errorCode) { }
     }
 

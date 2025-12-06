@@ -5,6 +5,9 @@ namespace bidify_be.Infrastructure.UnitOfWork
     public interface IUnitOfWork
     {
         ICategoryRepository Categories { get; }
+        IPackageBidRepository PackageBids { get; }
+        ITagRepository TagRepository { get; }
+        IAddressRepository Addresses { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

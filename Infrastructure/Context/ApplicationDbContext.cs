@@ -8,6 +8,11 @@ namespace bidify_be.Infrastructure.Context
         : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<Category> Categories => Set<Category>();
+        public DbSet<PackageBid> PackageBid => Set<PackageBid>();
+        public DbSet<Tag> Tags => Set<Tag>();
+        public DbSet<Address> Addresses => Set<Address>();
+        public DbSet<GiftType> GiftTypes => Set<GiftType>();
+        public DbSet<Gift> Gifts => Set<Gift>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
