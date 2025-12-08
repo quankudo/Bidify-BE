@@ -20,16 +20,10 @@ namespace bidify_be.Infrastructure.Configurations
                      .IsRequired();
 
             builder.Property(g => g.Description)
-                   .HasMaxLength(500);
+                   .HasMaxLength(200);
 
             builder.Property(g => g.Status)
                    .HasDefaultValue(true);
-
-            builder.Property(g => g.CreatedAt)
-                   .HasDefaultValueSql("GETUTCDATE()");
-
-            builder.Property(g => g.UpdatedAt)
-                   .HasDefaultValueSql("GETUTCDATE()");
 
             builder.HasOne<GiftType>()       
                .WithMany()              

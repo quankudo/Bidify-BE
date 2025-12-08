@@ -89,32 +89,30 @@ namespace bidify_be.Services.Implementations
         }
 
         // READ ALL BY USER
-        public async Task<List<AddressResponse>> GetAddressesByUserIdAsync(string userId)
+        public async Task<List<AddressResponse>> GetAddressesByUserIdAsync()
         {
-            _logger.LogInformation("Retrieving addresses for user {UserId}", userId);
-
             var currentUserId = _currentUserService.GetUserId();
-            AuthorizationHelper.EnsureSameUser(currentUserId, userId);
 
-            var addresses = await _unitOfWork.Addresses.GetAddressesByUserIdAsync(userId);
+            _logger.LogInformation("Retrieving addresses for user {UserId}", currentUserId);
+
+            var addresses = await _unitOfWork.Addresses.GetAddressesByUserIdAsync(currentUserId);
 
             return _mapper.Map<List<AddressResponse>>(addresses);
         }
 
         // READ DEFAULT
-        public async Task<AddressResponse> GetDefaultAddress(string userId)
+        public async Task<AddressResponse> GetDefaultAddress()
         {
-            _logger.LogInformation("Retrieving default address for user {UserId}", userId);
+            var currentUserId = _currentUserService.GetUserId();
 
-            var address = await _unitOfWork.Addresses.GetDefaultAddress(userId);
+            _logger.LogInformation("Retrieving default address for user {UserId}", currentUserId);
+
+            var address = await _unitOfWork.Addresses.GetDefaultAddress(currentUserId);
             if (address == null)
             {
                 throw new AddressNotFoundException("Default address not found");
             }
-
-            var currentUserId = _currentUserService.GetUserId();
-            AuthorizationHelper.EnsureSameUser(currentUserId, userId);
-
+            
             return _mapper.Map<AddressResponse>(address);
         }
 

@@ -49,6 +49,23 @@ namespace bidify_be.Exceptions
             : base(message, 404, errorCode) { }
     }
 
+    public class GiftTypeNotFoundException : AppException
+    {
+        public GiftTypeNotFoundException(string message, ErrorCode errorCode = ErrorCode.GiftTypeNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class GiftNotFoundException : AppException
+    {
+        public GiftNotFoundException(string message, ErrorCode errorCode = ErrorCode.GiftNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class VoucherNotFoundException : AppException
+    {
+        public VoucherNotFoundException(string message, ErrorCode errorCode = ErrorCode.VoucherNotFound)
+            : base(message, 404, errorCode) { }
+    }
 
     public class ValidationException : AppException
     {

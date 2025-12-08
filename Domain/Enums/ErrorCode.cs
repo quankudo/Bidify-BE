@@ -22,6 +22,15 @@ namespace bidify_be.Domain.Enums
         [Description("PACKAGE_BID_NOT_FOUND")]
         PackageBidNotFound,
 
+        [Description("GIFT_TYPE_NOT_FOUND")]
+        GiftTypeNotFound,
+
+        [Description("GIFT_NOT_FOUND")]
+        GiftNotFound,
+
+        [Description("VOUCHER_NOT_FOUND")]
+        VoucherNotFound,
+
         [Description("VALIDATION_FAILED")]
         ValidationFailed,
 

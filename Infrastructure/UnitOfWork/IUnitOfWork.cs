@@ -8,6 +8,9 @@ namespace bidify_be.Infrastructure.UnitOfWork
         IPackageBidRepository PackageBids { get; }
         ITagRepository TagRepository { get; }
         IAddressRepository Addresses { get; }
+        IGiftTypeRepository GiftTypeRepository { get; }
+        IGiftRepository GiftRepository { get; }
+        IVoucherRepository VoucherRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

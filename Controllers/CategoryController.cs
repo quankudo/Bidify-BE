@@ -19,7 +19,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        [AllowAnonymous]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<CategoryResponse>>> CreateCategory([FromBody] AddCategoryRequest request)
         {
             var response = await _categoryServices.CreateAsync(request);
@@ -29,7 +30,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize]
+        [AllowAnonymous]
+        //[Authorize]
         public async Task<ActionResult<ApiResponse<CategoryResponse>>> UpdateCategory([FromRoute] Guid id, [FromBody] UpdateCategoryRequest request)
         {
             var response = await _categoryServices.UpdateAsync(id, request);
@@ -59,7 +61,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "admin")]
+        [AllowAnonymous]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteCategory([FromRoute] Guid id)
         {
             var response = await _categoryServices.DeleteAsync(id);

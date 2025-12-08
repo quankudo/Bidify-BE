@@ -36,7 +36,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        [AllowAnonymous]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<TagResponse>>> CreateTag([FromBody] AddTagRequest request)
         {
             var response = await _tagService.CreateTagAsync(request);
@@ -46,7 +47,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize]
+        [AllowAnonymous]
+        //[Authorize]
         public async Task<ActionResult<ApiResponse<TagResponse>>> UpdateTag([FromRoute] Guid id, [FromBody] UpdateTagRequest request)
         {
             var response = await _tagService.UpdateTagAsync(id, request);
@@ -56,7 +58,8 @@ namespace bidify_be.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "admin")]
+        [AllowAnonymous]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteTag([FromRoute] Guid id)
         {
             await _tagService.DeleteTagAsync(id);

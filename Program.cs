@@ -3,9 +3,12 @@ using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Address;
 using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Category;
+using bidify_be.DTOs.Gift;
+using bidify_be.DTOs.GiftType;
 using bidify_be.DTOs.PackageBid;
 using bidify_be.DTOs.Tags;
 using bidify_be.DTOs.Users;
+using bidify_be.DTOs.Voucher;
 using bidify_be.Exceptions;
 using bidify_be.Extensions;
 using bidify_be.Infrastructure.Context;
@@ -20,9 +23,12 @@ using bidify_be.Services.Interfaces;
 using bidify_be.Validators.Address;
 using bidify_be.Validators.Auth;
 using bidify_be.Validators.Category;
+using bidify_be.Validators.Gift;
+using bidify_be.Validators.GiftType;
 using bidify_be.Validators.PackageBid;
 using bidify_be.Validators.Tags;
 using bidify_be.Validators.Users;
+using bidify_be.Validators.Voucher;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -63,14 +69,27 @@ builder.Services.AddSingleton<RazorTemplateService>();
 builder.Services.AddScoped<IValidator<UserRegisterRequest>, UserRegisterRequestValidator>();
 builder.Services.AddScoped<IValidator<UserLoginRequest>, UserLoginRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
+
 builder.Services.AddScoped<IValidator<AddCategoryRequest>, AddCategoryRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateCategoryRequest>, UpdateCategoryRequestValidator>();
+
 builder.Services.AddScoped<IValidator<AddPackageBidRequest>, AddPackageBidRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdatePackageBidRequest>, UpdatePackageBidRequestValidator>();
+
 builder.Services.AddScoped<IValidator<AddTagRequest>, AddTagRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateTagRequest>, UpdateTagRequestValidator>();
+
 builder.Services.AddScoped<IValidator<AddAddressRequest>, AddAddressRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateAddressRequest>, UpdateAddressRequestValidator>();
+
+builder.Services.AddScoped<IValidator<AddGiftTypeRequest>, AddGiftTypeRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateGiftTypeRequest>, UpdateGiftTypeRequestValidator>();
+
+builder.Services.AddScoped<IValidator<AddGiftRequest>, AddGiftRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateGiftRequest>, UpdateGiftRequestValidator>();
+
+builder.Services.AddScoped<IValidator<AddVoucherRequest>, AddVoucherRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateVoucherRequest>, UpdateVoucherRequestValidator>();
 
 // Adding Services  
 builder.Services.AddScoped<IUserServices, UserServiceImpl>();
@@ -80,12 +99,17 @@ builder.Services.AddScoped<ICategoryServices, CategoryServiceImpl>();
 builder.Services.AddScoped<IPackageBidService, PackageBidServiceImpl>();
 builder.Services.AddScoped<ITagService, TagServiceImpl>();
 builder.Services.AddScoped<IAddressService, AddressServiceImpl>();
+builder.Services.AddScoped<IGiftTypeService, GiftTypeServiceImpl>();
+builder.Services.AddScoped<IGiftService, GiftServiceImpl>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();
 builder.Services.AddScoped<IPackageBidRepository, PackageBidRepositoryImpl>();
 builder.Services.AddScoped<ITagRepository, TagRepositoryImpl>();
 builder.Services.AddScoped<IAddressRepository, AddressRepositoryImpl>();
+builder.Services.AddScoped<IGiftTypeRepository, GiftTypeRepositoryImpl>();
+builder.Services.AddScoped<IGiftRepository, GiftRepositoryImpl>();
+builder.Services.AddScoped<IVoucherRepository, VoucherRepositoryImpl>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Adding AutoMapper

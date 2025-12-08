@@ -13,6 +13,7 @@ namespace bidify_be.Infrastructure.Context
         public DbSet<Address> Addresses => Set<Address>();
         public DbSet<GiftType> GiftTypes => Set<GiftType>();
         public DbSet<Gift> Gifts => Set<Gift>();
+        public DbSet<Voucher> Vouchers => Set<Voucher>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -3,9 +3,12 @@ using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Address;
 using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Category;
+using bidify_be.DTOs.Gift;
+using bidify_be.DTOs.GiftType;
 using bidify_be.DTOs.PackageBid;
 using bidify_be.DTOs.Tags;
 using bidify_be.DTOs.Users;
+using bidify_be.DTOs.Voucher;
 
 namespace bidify_be.Infrastructure.Mapping
 {
@@ -41,6 +44,25 @@ namespace bidify_be.Infrastructure.Mapping
             CreateMap<UpdateAddressRequest, Address>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
             CreateMap<Address, AddressResponse>();
+
+            // Gift Type Mappings
+            CreateMap<AddGiftTypeRequest, GiftType>();
+            CreateMap<UpdateGiftTypeRequest, GiftType>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
+            CreateMap<GiftType, GiftTypeResponse>();
+
+            // Gift Mapping
+            CreateMap<AddGiftRequest, Gift>();
+            CreateMap<UpdateGiftRequest, Gift>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
+            CreateMap<Gift, GiftResponse>();
+
+            // Voucher Mapping
+            CreateMap<AddVoucherRequest, Voucher>();
+            CreateMap<UpdateVoucherRequest, Voucher>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
+            CreateMap<Voucher, VoucherResponse>();
+
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using bidify_be.Infrastructure.Context;
 
@@ -10,9 +11,11 @@ using bidify_be.Infrastructure.Context;
 namespace bidify_be.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251207160141_UpdateTableGiftTypeOnColumnCode")]
+    partial class UpdateTableGiftTypeOnColumnCode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -490,55 +493,6 @@ namespace bidify_be.Migrations
                     b.ToTable("Tags", (string)null);
                 });
 
-            modelBuilder.Entity("bidify_be.Domain.Entities.Voucher", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("varchar(15)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<decimal>("Discount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("DiscountType")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("PackageBidId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("VoucherTypeId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PackageBidId");
-
-                    b.HasIndex("VoucherTypeId");
-
-                    b.ToTable("Vouchers", (string)null);
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -604,21 +558,6 @@ namespace bidify_be.Migrations
                     b.HasOne("bidify_be.Domain.Entities.GiftType", null)
                         .WithMany()
                         .HasForeignKey("GiftTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("bidify_be.Domain.Entities.Voucher", b =>
-                {
-                    b.HasOne("bidify_be.Domain.Entities.PackageBid", null)
-                        .WithMany()
-                        .HasForeignKey("PackageBidId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("bidify_be.Domain.Entities.GiftType", null)
-                        .WithMany()
-                        .HasForeignKey("VoucherTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

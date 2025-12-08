@@ -138,7 +138,7 @@ namespace bidify_be.Services.Implementations
 
             tag.UpdatedAt = DateTime.UtcNow;
 
-            _unitOfWork.TagRepository.UpdateTagAsync(tag);
+            _unitOfWork.TagRepository.DeleteTagAsync(tag);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Tag with ID {Id} deleted (soft) successfully", id);
@@ -159,7 +159,7 @@ namespace bidify_be.Services.Implementations
 
             tag.UpdatedAt = DateTime.UtcNow;
 
-            _unitOfWork.TagRepository.UpdateTagAsync(tag);
+            _unitOfWork.TagRepository.ToggleActiveAsync(tag);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Tag with ID {Id} toggled status to: {Status}", id, tag.Status);

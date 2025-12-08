@@ -14,23 +14,17 @@ namespace bidify_be.Infrastructure.Configurations
 
             builder.Property(gt => gt.Code)
                    .IsRequired()
-                   .HasMaxLength(50);
+                   .HasMaxLength(15);
 
             builder.Property(gt => gt.Name)
                    .IsRequired()
                    .HasMaxLength(100);
 
             builder.Property(gt => gt.Description)
-                   .HasMaxLength(500);
+                   .HasMaxLength(200);
 
             builder.Property(gt => gt.Status)
                    .HasDefaultValue(true);
-
-            builder.Property(gt => gt.CreatedAt)
-                   .HasDefaultValueSql("GETUTCDATE()");
-
-            builder.Property(gt => gt.UpdatedAt)
-                   .HasDefaultValueSql("GETUTCDATE()");
         }
     }
 }
