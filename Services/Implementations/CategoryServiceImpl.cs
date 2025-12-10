@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Category;
@@ -82,14 +83,12 @@ namespace bidify_be.Services.Implementations
         }
 
 
-        public async Task<IEnumerable<CategoryResponse>> GetAllAsync()
+        public async Task<PagedResult<CategoryResponse>> GetAllAsync(CategoryQueryRequest req)
         {
-            _logger.LogInformation("Retrieving all categories");
-
-            var categories = await _unitOfWork.Categories.GetAllAsync();
-
-            return _mapper.Map<IEnumerable<CategoryResponse>>(categories);
+            _logger.LogInformation("Get all categories with paging/search/filter");
+            return await _unitOfWork.Categories.GetAllAsync(req);
         }
+
 
 
 

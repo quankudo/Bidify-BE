@@ -26,12 +26,12 @@ namespace bidify_be.Controllers
             return Ok(ApiResponse<AddressResponse>.SuccessResponse(address, "Get address successfully"));
         }
 
-        // GET /api/address/user/{userId}/list
-        [HttpGet("user/{userId}/list")]
+        // GET /api/address/list
+        [HttpGet("list")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<List<AddressResponse>>>> GetAddressesByUserIdAsync(string userId)
+        public async Task<ActionResult<ApiResponse<List<AddressResponse>>>> GetAddressesByUserIdAsync()
         {
-            var addresses = await _addressService.GetAddressesByUserIdAsync(userId);
+            var addresses = await _addressService.GetAddressesByUserIdAsync();
             return Ok(ApiResponse<List<AddressResponse>>.SuccessResponse(addresses, "Get addresses successfully"));
         }
 

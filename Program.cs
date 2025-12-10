@@ -101,6 +101,7 @@ builder.Services.AddScoped<ITagService, TagServiceImpl>();
 builder.Services.AddScoped<IAddressService, AddressServiceImpl>();
 builder.Services.AddScoped<IGiftTypeService, GiftTypeServiceImpl>();
 builder.Services.AddScoped<IGiftService, GiftServiceImpl>();
+builder.Services.AddScoped<IVoucherService, VoucherServiceImpl>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();

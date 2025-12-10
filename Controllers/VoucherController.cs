@@ -89,5 +89,17 @@ namespace bidify_be.Controllers
             var result = await _voucherService.GetVouchersByPackageBidIdAsync(packageBidId);
             return Ok(ApiResponse<IEnumerable<VoucherResponse>>.SuccessResponse(result, "Fetched vouchers by package bid successfully"));
         }
+
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<PagedResult<VoucherResponse>>>> GetAllAsync([FromQuery] VoucherQueryRequest request)
+        {
+            var result = await _voucherService.QueryAsync(request);
+            return Ok(ApiResponse<PagedResult<VoucherResponse>>.SuccessResponse(
+                result,
+                "Fetched vouchers successfully"
+            ));
+        }
+
     }
 }

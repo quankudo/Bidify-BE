@@ -1,4 +1,5 @@
-﻿using bidify_be.Domain.Entities;
+﻿using bidify_be.Domain.Contracts;
+using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Voucher;
 
 namespace bidify_be.Services.Interfaces
@@ -27,5 +28,7 @@ namespace bidify_be.Services.Interfaces
 
         // Lấy voucher theo PackageBidId
         Task<IEnumerable<VoucherResponse>> GetVouchersByPackageBidIdAsync(Guid packageBidId);
+
+        Task<PagedResult<VoucherResponse>> QueryAsync(VoucherQueryRequest req);
     }
 }

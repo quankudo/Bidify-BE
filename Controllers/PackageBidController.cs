@@ -18,16 +18,14 @@ namespace bidify_be.Controllers
             _packageBidService = packageBidService;
         }
 
-        [HttpGet]
+        [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<IEnumerable<PackageBidResponse>>>> GetAllPackageBids()
+        public async Task<ActionResult<ApiResponse<PagedResult<PackageBidResponse>>>> GetAllPagingAsync([FromQuery] PackageBidQueryRequest req)
         {
-            var response = await _packageBidService.GetAllAsync();
-
-            return Ok(ApiResponse<IEnumerable<PackageBidResponse>>.SuccessResponse(
-                response, "Package bids retrieved successfully"
-            ));
+            var result = await _packageBidService.GetAllAsync(req);
+            return Ok(ApiResponse<PagedResult<PackageBidResponse>>.SuccessResponse(result));
         }
+
 
         [HttpPost]
         //[Authorize(Roles = "admin")]

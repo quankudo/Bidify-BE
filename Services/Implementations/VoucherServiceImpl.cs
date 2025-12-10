@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Voucher;
@@ -157,6 +158,12 @@ namespace bidify_be.Services.Implementations
             while (exists);
 
             return code;
+        }
+
+        public async Task<PagedResult<VoucherResponse>> QueryAsync(VoucherQueryRequest req)
+        {
+            _logger.LogInformation("Querying vouchers with filters");
+            return await _unitOfWork.VoucherRepository.QueryAsync(req);
         }
     }
 }

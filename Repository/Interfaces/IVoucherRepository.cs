@@ -1,5 +1,7 @@
-﻿using bidify_be.Domain.Entities;
+﻿using bidify_be.Domain.Contracts;
+using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
+using bidify_be.DTOs.Voucher;
 using System.Runtime.CompilerServices;
 
 namespace bidify_be.Repository.Interfaces
@@ -25,6 +27,8 @@ namespace bidify_be.Repository.Interfaces
         // Tìm theo PackageBidId hoặc Status
         Task<IEnumerable<Voucher>> GetByPackageBidIdAsync(Guid packageBidId);
         Task<IEnumerable<Voucher>> GetByStatusAsync(VoucherStatus status);
+
+        Task<PagedResult<VoucherResponse>> QueryAsync(VoucherQueryRequest req);
 
         Task<bool> ExistsByCodeAsync(string code);
     }

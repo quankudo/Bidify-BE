@@ -50,15 +50,14 @@ namespace bidify_be.Controllers
             ));
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<IEnumerable<CategoryResponse>>>> GetAllCategories()
+        [HttpGet("search")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<ApiResponse<PagedResult<CategoryResponse>>>> GetAllPagingAsync([FromQuery] CategoryQueryRequest req)
         {
-            var response = await _categoryServices.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<CategoryResponse>>.SuccessResponse(
-                response, "Categories retrieved successfully"
-            ));
+            var result = await _categoryServices.GetAllAsync(req);
+            return Ok(ApiResponse<PagedResult<CategoryResponse>>.SuccessResponse(result));
         }
+
 
         [HttpDelete("{id:guid}")]
         [AllowAnonymous]

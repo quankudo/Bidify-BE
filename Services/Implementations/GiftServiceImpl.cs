@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Gift;
 using bidify_be.Exceptions;
@@ -71,20 +72,31 @@ namespace bidify_be.Services.Implementations
         }
 
         // GET ALL
-        public async Task<IEnumerable<GiftResponse>> GetAllAsync()
+        //public async Task<IEnumerable<GiftResponse>> GetAllAsync()
+        //{
+        //    _logger.LogInformation("Getting all gifts");
+        //    return await _unitOfWork.GiftRepository.GetAllAsync();
+        //}
+
+        public async Task<PagedResult<GiftResponse>> SearchAsync(GiftQueryRequest req)
         {
-            _logger.LogInformation("Getting all gifts");
-            var gifts = await _unitOfWork.GiftRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<GiftResponse>>(gifts);
+            _logger.LogInformation("Searching gifts...");
+            return await _unitOfWork.GiftRepository.SearchAsync(req);
         }
+
 
         // GET BY ID
         public async Task<GiftResponse> GetByIdAsync(Guid id)
         {
             _logger.LogInformation("Getting gift with Id = {Id}", id);
 
-            var gift = await GetGiftOrThrowAsync(id);
-            return _mapper.Map<GiftResponse>(gift);
+            var gift = await _unitOfWork.GiftRepository.GetByIdAsyncResponse(id);
+            if(gift == null)
+            {
+                _logger.LogInformation("Gift not found with {Id}", id);
+                throw new GiftNotFoundException($"Gift not found with {id}");
+            }
+            return gift;
         }
 
         // UPDATE

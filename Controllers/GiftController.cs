@@ -18,12 +18,20 @@ namespace bidify_be.Controllers
         }
 
         // GET: api/gift
-        [HttpGet]
+        //[HttpGet]
+        //[AllowAnonymous]
+        //public async Task<ActionResult<ApiResponse<IEnumerable<GiftResponse>>>> GetAllAsync()
+        //{
+        //    var result = await _giftService.GetAllAsync();
+        //    return Ok(ApiResponse<IEnumerable<GiftResponse>>.SuccessResponse(result, "Fetched all gifts successfully"));
+        //}
+
+        [HttpGet("search")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<IEnumerable<GiftResponse>>>> GetAllAsync()
+        public async Task<ActionResult<ApiResponse<PagedResult<GiftResponse>>>> SearchAsync([FromQuery] GiftQueryRequest req)
         {
-            var result = await _giftService.GetAllAsync();
-            return Ok(ApiResponse<IEnumerable<GiftResponse>>.SuccessResponse(result, "Fetched all gifts successfully"));
+            var result = await _giftService.SearchAsync(req);
+            return Ok(ApiResponse<PagedResult<GiftResponse>>.SuccessResponse(result, "Fetched gifts successfully"));
         }
 
         // GET: api/gift/{id}

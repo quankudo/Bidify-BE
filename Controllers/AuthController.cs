@@ -19,7 +19,7 @@ namespace bidify_be.Controllers
             _userService = userService;
         }
 
-        [HttpPost("register")]
+        [HttpPost("auth/register")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<UserRegisterResponse>>> Register([FromBody] UserRegisterRequest request)
         {
@@ -30,7 +30,7 @@ namespace bidify_be.Controllers
         }
 
 
-        [HttpPost("login")]
+        [HttpPost("auth/login")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<UserResponse>>> Login([FromBody] UserLoginRequest request)
         {
@@ -40,7 +40,7 @@ namespace bidify_be.Controllers
             ));
         }
 
-        [HttpPost("verify-email")]
+        [HttpPost("auth/verify-email")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> VerifyEmail([FromBody] VerifyEmailRequest request)
         {
@@ -52,7 +52,7 @@ namespace bidify_be.Controllers
             ));
         }
 
-        [HttpPost("change-password")]
+        [HttpPost("auth/change-password")]
         [Authorize]
         public async Task<ActionResult<ApiResponse<bool>>> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -65,7 +65,7 @@ namespace bidify_be.Controllers
 
         }
 
-        [HttpPost("forget-password")]
+        [HttpPost("auth/forget-password")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ForgetPassword([FromBody] ForgetPasswordRequest request)
         {
@@ -78,7 +78,7 @@ namespace bidify_be.Controllers
         }
 
 
-        [HttpPost("resend-code")]
+        [HttpPost("auth/resend-code")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ResendCode([FromBody] ResendCodeRequest request)
         {
@@ -110,7 +110,7 @@ namespace bidify_be.Controllers
             ));
         }
 
-        [HttpPost("refresh-token")]
+        [HttpPost("auth/refresh-token")]
         [Authorize]
         public async Task<ActionResult<ApiResponse<RefreshTokenResponse>>> RefreshToken([FromBody] RefreshTokenRequest request)
         {
@@ -130,7 +130,7 @@ namespace bidify_be.Controllers
         }
 
 
-        [HttpPost("revoke-refresh-token")]
+        [HttpPost("auth/revoke-refresh-token")]
         [Authorize]
         public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest request)
         {

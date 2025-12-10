@@ -1,4 +1,6 @@
-﻿using bidify_be.Domain.Entities;
+﻿using bidify_be.Domain.Contracts;
+using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Category;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -46,12 +48,41 @@ namespace bidify_be.Repository.Implementations
                            .AnyAsync(c => c.Title.ToLower() == title.ToLower() && c.Id != id);
         }
 
-        public async Task<IEnumerable<Category>> GetAllAsync()
+        public async Task<PagedResult<CategoryResponse>> GetAllAsync(CategoryQueryRequest req)
         {
-            return await _context.Categories
-                                 .AsNoTracking()
-                                 .ToListAsync();
+            var query = _context.Categories.AsNoTracking();
+
+            // Search theo Title
+            if (!string.IsNullOrWhiteSpace(req.Search))
+            {
+                string keyword = req.Search.Trim().ToLower();
+                query = query.Where(x => x.Title.ToLower().Contains(keyword));
+            }
+
+            // Filter theo Status
+            if (req.Status.HasValue)
+            {
+                query = query.Where(x => x.Status == req.Status.Value);
+            }
+
+            int totalItems = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(x => x.CreatedAt) // nếu không có CreatedAt thì x.Id
+                .Skip((req.Page - 1) * req.PageSize)
+                .Take(req.PageSize)
+                .Select(x => new CategoryResponse
+                {
+                    Id = x.Id,
+                    Title = x.Title,
+                    ImageUrl = x.ImageUrl,
+                    Status = x.Status
+                })
+                .ToListAsync();
+
+            return new PagedResult<CategoryResponse>(items, totalItems, req.Page, req.PageSize);
         }
+
 
         public async Task<Category?> GetByIdAsync(Guid id)
         {

@@ -8,4 +8,10 @@
         public string Description { get; set; } = string.Empty;
         public bool Status { get; set; } = true;
     }
+
+    public class GiftTypeShortResponse
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+    }
 }

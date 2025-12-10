@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using bidify_be.DTOs.PackageBid;
 using bidify_be.Exceptions;
 using bidify_be.Helpers;
@@ -57,14 +58,12 @@ namespace bidify_be.Services.Implementations
             return _mapper.Map<PackageBidResponse>(entity);
         }
 
-        public async Task<IEnumerable<PackageBidResponse>> GetAllAsync()
+        public async Task<PagedResult<PackageBidResponse>> GetAllAsync(PackageBidQueryRequest req)
         {
-            _logger.LogInformation("Retrieving all package bids");
-
-            var list = await _unitOfWork.PackageBids.GetAllAsync();
-
-            return _mapper.Map<IEnumerable<PackageBidResponse>>(list);
+            _logger.LogInformation("Get all package bids with paging/search/filter");
+            return await _unitOfWork.PackageBids.GetAllAsync(req);
         }
+
 
         public async Task<PackageBidResponse> GetByIdAsync(Guid id)
         {
