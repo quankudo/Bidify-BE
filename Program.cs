@@ -6,6 +6,7 @@ using bidify_be.DTOs.Category;
 using bidify_be.DTOs.Gift;
 using bidify_be.DTOs.GiftType;
 using bidify_be.DTOs.PackageBid;
+using bidify_be.DTOs.Product;
 using bidify_be.DTOs.Tags;
 using bidify_be.DTOs.Users;
 using bidify_be.DTOs.Voucher;
@@ -26,6 +27,7 @@ using bidify_be.Validators.Category;
 using bidify_be.Validators.Gift;
 using bidify_be.Validators.GiftType;
 using bidify_be.Validators.PackageBid;
+using bidify_be.Validators.Product;
 using bidify_be.Validators.Tags;
 using bidify_be.Validators.Users;
 using bidify_be.Validators.Voucher;
@@ -91,6 +93,9 @@ builder.Services.AddScoped<IValidator<UpdateGiftRequest>, UpdateGiftRequestValid
 builder.Services.AddScoped<IValidator<AddVoucherRequest>, AddVoucherRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateVoucherRequest>, UpdateVoucherRequestValidator>();
 
+builder.Services.AddScoped<IValidator<AddProductRequest>, AddProductRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateProductRequest>, UpdateProductRequestValidator>();
+
 // Adding Services  
 builder.Services.AddScoped<IUserServices, UserServiceImpl>();
 builder.Services.AddScoped<ITokenService, TokenServiceImpl>();
@@ -102,6 +107,7 @@ builder.Services.AddScoped<IAddressService, AddressServiceImpl>();
 builder.Services.AddScoped<IGiftTypeService, GiftTypeServiceImpl>();
 builder.Services.AddScoped<IGiftService, GiftServiceImpl>();
 builder.Services.AddScoped<IVoucherService, VoucherServiceImpl>();
+builder.Services.AddScoped<IProductService, ProductServiceImpl>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();
@@ -111,6 +117,7 @@ builder.Services.AddScoped<IAddressRepository, AddressRepositoryImpl>();
 builder.Services.AddScoped<IGiftTypeRepository, GiftTypeRepositoryImpl>();
 builder.Services.AddScoped<IGiftRepository, GiftRepositoryImpl>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepositoryImpl>();
+builder.Services.AddScoped<IProductRepository, ProductRepositoryImpl>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Adding AutoMapper

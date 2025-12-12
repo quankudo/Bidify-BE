@@ -9,6 +9,7 @@ namespace bidify_be.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "admin")]
     public class VoucherController : ControllerBase
     {
         private readonly IVoucherService _voucherService;
@@ -20,7 +21,6 @@ namespace bidify_be.Controllers
 
         // GET: api/voucher
         [HttpGet]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<VoucherResponse>>>> GetAllAsync()
         {
             var result = await _voucherService.GetAllVouchersAsync();
@@ -29,7 +29,6 @@ namespace bidify_be.Controllers
 
         // GET: api/voucher/{id}
         [HttpGet("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<VoucherResponse>>> GetByIdAsync(Guid id)
         {
             var result = await _voucherService.GetVoucherByIdAsync(id);
@@ -38,7 +37,6 @@ namespace bidify_be.Controllers
 
         // POST: api/voucher
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<VoucherResponse>>> CreateAsync([FromBody] AddVoucherRequest request)
         {
             var result = await _voucherService.AddVoucherAsync(request);
@@ -47,7 +45,6 @@ namespace bidify_be.Controllers
 
         // PUT: api/voucher/{id}
         [HttpPut("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<VoucherResponse>>> UpdateAsync(Guid id, [FromBody] UpdateVoucherRequest request)
         {
             var result = await _voucherService.UpdateVoucherAsync(id, request);
@@ -56,7 +53,6 @@ namespace bidify_be.Controllers
 
         // DELETE: api/voucher/{id}
         [HttpDelete("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteAsync(Guid id)
         {
             var result = await _voucherService.DeleteVoucherAsync(id);
@@ -65,7 +61,6 @@ namespace bidify_be.Controllers
 
         // PATCH: api/voucher/{id}/toggle-active
         [HttpPatch("{id:guid}/toggle-active")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleActiveAsync(Guid id)
         {
             var result = await _voucherService.ToggleActiveAsync(id);
@@ -74,7 +69,6 @@ namespace bidify_be.Controllers
 
         // GET: api/voucher/status/{status}
         [HttpGet("status/{status}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<VoucherResponse>>>> GetByStatus(VoucherStatus status)
         {
             var result = await _voucherService.GetVouchersByStatusAsync(status);
@@ -83,7 +77,6 @@ namespace bidify_be.Controllers
 
         // GET: api/voucher/package-bid/{packageBidId}
         [HttpGet("package-bid/{packageBidId:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<VoucherResponse>>>> GetByPackageBidId(Guid packageBidId)
         {
             var result = await _voucherService.GetVouchersByPackageBidIdAsync(packageBidId);
@@ -91,7 +84,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("search")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<PagedResult<VoucherResponse>>>> GetAllAsync([FromQuery] VoucherQueryRequest request)
         {
             var result = await _voucherService.QueryAsync(request);

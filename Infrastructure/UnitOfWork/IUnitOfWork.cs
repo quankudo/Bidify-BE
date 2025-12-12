@@ -11,6 +11,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
         IGiftTypeRepository GiftTypeRepository { get; }
         IGiftRepository GiftRepository { get; }
         IVoucherRepository VoucherRepository { get; }
+        IProductRepository ProductRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

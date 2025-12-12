@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using bidify_be.Services.Interfaces;
+﻿using bidify_be.Domain.Contracts;
 using bidify_be.DTOs.Gift;
-using bidify_be.Domain.Contracts;
+using bidify_be.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Data;
 
 namespace bidify_be.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize(Roles = "admin")]
+    [AllowAnonymous]
     public class GiftController : ControllerBase
     {
         private readonly IGiftService _giftService;
@@ -17,17 +20,7 @@ namespace bidify_be.Controllers
             _giftService = giftService;
         }
 
-        // GET: api/gift
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public async Task<ActionResult<ApiResponse<IEnumerable<GiftResponse>>>> GetAllAsync()
-        //{
-        //    var result = await _giftService.GetAllAsync();
-        //    return Ok(ApiResponse<IEnumerable<GiftResponse>>.SuccessResponse(result, "Fetched all gifts successfully"));
-        //}
-
         [HttpGet("search")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<PagedResult<GiftResponse>>>> SearchAsync([FromQuery] GiftQueryRequest req)
         {
             var result = await _giftService.SearchAsync(req);
@@ -36,7 +29,6 @@ namespace bidify_be.Controllers
 
         // GET: api/gift/{id}
         [HttpGet("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<GiftResponse>>> GetByIdAsync(Guid id)
         {
             var result = await _giftService.GetByIdAsync(id);
@@ -45,7 +37,6 @@ namespace bidify_be.Controllers
 
         // POST: api/gift
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<GiftResponse>>> CreateAsync([FromBody] AddGiftRequest request)
         {
             var result = await _giftService.CreateAsync(request);
@@ -55,7 +46,6 @@ namespace bidify_be.Controllers
 
         // PUT: api/gift/{id}
         [HttpPut("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<GiftResponse>>> UpdateAsync(Guid id, [FromBody] UpdateGiftRequest request)
         {
             var result = await _giftService.UpdateAsync(id, request);
@@ -64,7 +54,6 @@ namespace bidify_be.Controllers
 
         // DELETE: api/gift/{id}
         [HttpDelete("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteAsync(Guid id)
         {
             var result = await _giftService.DeleteAsync(id);
@@ -73,7 +62,6 @@ namespace bidify_be.Controllers
 
         // PATCH: api/gift/{id}/toggle-active
         [HttpPatch("{id:guid}/toggle-active")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleActiveAsync(Guid id)
         {
             var result = await _giftService.ToggleActiveAsync(id);

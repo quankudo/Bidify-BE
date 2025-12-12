@@ -1,4 +1,5 @@
 ﻿using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Tags;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -39,12 +40,34 @@ namespace bidify_be.Repository.Implementations
                 .AnyAsync(t => t.Id != id && t.Title.ToLower() == title.ToLower());
         }
 
-        public async Task<IEnumerable<Tag>> GetAllTagsAsync()
+        public async Task<IEnumerable<TagResponse>> GetAllTagsAsync(TagQueryRequest req)
         {
-            return await _context.Tags
-                .AsNoTracking()
+            var query = _context.Tags.AsNoTracking().AsQueryable();
+
+            // SEARCH theo Title
+            if (!string.IsNullOrWhiteSpace(req.Search))
+            {
+                string keyword = req.Search.Trim().ToLower();
+                query = query.Where(x => x.Title.ToLower().Contains(keyword));
+            }
+
+            // FILTER theo TagType
+            if (req.Type.HasValue)
+            {
+                query = query.Where(x => x.Type == req.Type.Value);
+            }
+
+            return await query
+                .Select(x => new TagResponse
+                {
+                    Id = x.Id,
+                    Title = x.Title,
+                    Type = x.Type,
+                    Status = x.Status
+                })
                 .ToListAsync();
         }
+
 
         public async Task<Tag?> GetTagByIdAsync(Guid id)
         {

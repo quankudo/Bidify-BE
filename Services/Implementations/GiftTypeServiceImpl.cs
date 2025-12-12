@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.DTOs.GiftType;
 using bidify_be.Exceptions;
@@ -85,13 +86,12 @@ namespace bidify_be.Services.Implementations
             return true;
         }
 
-        public async Task<IEnumerable<GiftTypeResponse>> GetAllAsync()
+        public async Task<PagedResult<GiftTypeResponse>> GetAllAsync(GiftTypeQueryRequest req)
         {
-            _logger.LogInformation("Getting all gift types");
-
-            var gifts = await _unitOfWork.GiftTypeRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<GiftTypeResponse>>(gifts);
+            _logger.LogInformation("Getting all gift types with filters");
+            return await _unitOfWork.GiftTypeRepository.GetAllAsync(req);
         }
+
 
         public async Task<GiftTypeResponse> GetByIdAsync(Guid id)
         {

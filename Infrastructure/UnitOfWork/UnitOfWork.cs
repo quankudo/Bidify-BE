@@ -14,6 +14,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
         public IGiftTypeRepository GiftTypeRepository { get; }
         public IGiftRepository GiftRepository { get; }
         public IVoucherRepository VoucherRepository { get; }
+        public IProductRepository ProductRepository { get; }
 
         public UnitOfWork(
             ApplicationDbContext context, 
@@ -23,7 +24,8 @@ namespace bidify_be.Infrastructure.UnitOfWork
             IAddressRepository addresses,
             IGiftTypeRepository giftTypeRepository,
             IGiftRepository giftRepository,
-            IVoucherRepository voucherRepository)
+            IVoucherRepository voucherRepository,
+            IProductRepository productRepository)
         {
             _context = context;
             Categories = categories;
@@ -33,6 +35,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
             GiftRepository = giftRepository;
             GiftTypeRepository = giftTypeRepository;
             VoucherRepository = voucherRepository;
+            ProductRepository = productRepository;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

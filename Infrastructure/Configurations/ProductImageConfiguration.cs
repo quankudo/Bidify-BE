@@ -14,7 +14,7 @@ namespace bidify_be.Infrastructure.Configurations
 
             builder.Property(pi => pi.ImageUrl)
                 .IsRequired()
-                .HasMaxLength(500);
+                .HasMaxLength(300);
 
             builder.Property(pi => pi.PublicId)
                 .HasMaxLength(200);

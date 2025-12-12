@@ -12,6 +12,10 @@ namespace bidify_be.Infrastructure.Configurations
 
             builder.HasKey(pa => pa.Id);
 
+            // Unique: một product chỉ có một attribute với Key nhất định
+            builder.HasIndex(pa => new { pa.ProductId, pa.Key })
+                   .IsUnique();
+
             builder.Property(pa => pa.Key)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -19,8 +23,7 @@ namespace bidify_be.Infrastructure.Configurations
             builder.Property(pa => pa.Value)
                 .IsRequired()
                 .HasMaxLength(200);
-
-            builder.HasIndex(pa => pa.ProductId);
         }
     }
+
 }

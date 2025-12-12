@@ -65,6 +65,17 @@ namespace bidify_be.Extensions
                 };
                 o.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // Lấy token từ cookie "jwt-token" (tên cookie bạn đặt frontend)
+                        var token = context.Request.Cookies["jwt-token"];
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
+                    },
+
                     OnChallenge = context =>
                     {
                         context.HandleResponse();

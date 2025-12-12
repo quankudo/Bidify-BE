@@ -4,6 +4,7 @@
     {
         Pending = 0,
         Active = 1,
-        Cancelled = 2,
+        Cancelled = 2, //Do admin huy
+        Hidden = 3 // Do user tu huy
     }
 }

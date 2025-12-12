@@ -1,4 +1,5 @@
-﻿using bidify_be.Domain.Contracts;
+﻿using AutoMapper;
+using bidify_be.Domain.Contracts;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 
@@ -59,8 +60,10 @@ namespace bidify_be.Exceptions
                         exception.Message, traceId);
 
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    //response.Title = exception.GetType().Name;
+                    //response.Message = exception.Message;
                     response.Title = "Internal Server Error";
-                    response.Message = "An unexpected error occurred."; 
+                    response.Message = "An unexpected error occurred.";
                     break;
             }
 

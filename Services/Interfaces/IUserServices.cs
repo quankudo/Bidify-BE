@@ -1,4 +1,5 @@
-﻿using bidify_be.DTOs.Auth;
+﻿using bidify_be.Domain.Contracts;
+using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Users;
 
 namespace bidify_be.Services.Interfaces
@@ -13,7 +14,7 @@ namespace bidify_be.Services.Interfaces
         Task<RevokeRefreshTokenResponse> RevokeRefreshToken(RefreshTokenRequest refreshTokenRemoveRequest);
         Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request);
 
-        Task<UserResponse> LoginAsync(UserLoginRequest request);
+        Task<TokenWithUserResponse> LoginAsync(UserLoginRequest request);
 
         Task VerifyEmail(VerifyEmailRequest user);
 
@@ -22,5 +23,7 @@ namespace bidify_be.Services.Interfaces
         Task ChangePassword(ChangePasswordRequest request);
 
         Task ForgetPassword(ForgetPasswordRequest request);
+
+        Task<PagedResult<UserResponse>> GetAllUsersAsync(UserQueryRequest req);
     }
 }

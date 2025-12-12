@@ -8,6 +8,8 @@ namespace bidify_be.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
+    //[Authorize(Roles = "admin")]
     public class TagController : ControllerBase
     {
         private readonly ITagService _tagService;
@@ -18,26 +20,22 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<TagResponse>>> GetTagById([FromRoute] Guid id)
         {
             var response = await _tagService.GetTagByIdAsync(id);
             return Ok(ApiResponse<TagResponse>.SuccessResponse(response, "Tag retrieved successfully" ));
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<IEnumerable<TagResponse>>>> GetAllTags()
+        [HttpGet("search")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<TagResponse>>>> GetAllTags([FromQuery] TagQueryRequest queryRequest)
         {
-            var response = await _tagService.GetAllTagsAsync();
+            var response = await _tagService.GetAllTagsAsync(queryRequest);
             return Ok(ApiResponse<IEnumerable<TagResponse>>.SuccessResponse(
                 response, "Tags retrieved successfully"
             ));
         }
 
         [HttpPost]
-        [AllowAnonymous]
-        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<TagResponse>>> CreateTag([FromBody] AddTagRequest request)
         {
             var response = await _tagService.CreateTagAsync(request);
@@ -47,8 +45,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [AllowAnonymous]
-        //[Authorize]
         public async Task<ActionResult<ApiResponse<TagResponse>>> UpdateTag([FromRoute] Guid id, [FromBody] UpdateTagRequest request)
         {
             var response = await _tagService.UpdateTagAsync(id, request);
@@ -58,8 +54,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        [AllowAnonymous]
-        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteTag([FromRoute] Guid id)
         {
             await _tagService.DeleteTagAsync(id);
@@ -69,7 +63,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpPatch("toggle-active/{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleTagActiveStatus([FromRoute] Guid id)
         {
             await _tagService.ToggleActiveAsync(id);

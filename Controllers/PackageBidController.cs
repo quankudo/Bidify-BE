@@ -28,8 +28,7 @@ namespace bidify_be.Controllers
 
 
         [HttpPost]
-        //[Authorize(Roles = "admin")]
-        [AllowAnonymous]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<PackageBidResponse>>> CreatePackageBid([FromBody] AddPackageBidRequest request)
         {
             var response = await _packageBidService.CreateAsync(request);
@@ -39,8 +38,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        //[Authorize(Roles = "admin")]
-        [AllowAnonymous]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<PackageBidResponse>>> UpdatePackageBid([FromRoute] Guid id, [FromBody] UpdatePackageBidRequest request)
         {
             var response = await _packageBidService.UpdateAsync(id, request);
@@ -60,8 +58,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpDelete("{id:guid}")]
-        //[Authorize(Roles = "admin")]
-        [AllowAnonymous]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeletePackageBid([FromRoute] Guid id)
         {
             var result = await _packageBidService.DeleteAsync(id);
@@ -71,6 +68,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpPatch("toggle-active/{id:guid}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> TogglePackageBidActiveStatus([FromRoute] Guid id)
         {
             var result = await _packageBidService.ToggleActiveAsync(id);

@@ -9,6 +9,7 @@ namespace bidify_be.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "admin")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryServices _categoryServices;
@@ -19,7 +20,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
         //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<CategoryResponse>>> CreateCategory([FromBody] AddCategoryRequest request)
         {
@@ -30,7 +30,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [AllowAnonymous]
         //[Authorize]
         public async Task<ActionResult<ApiResponse<CategoryResponse>>> UpdateCategory([FromRoute] Guid id, [FromBody] UpdateCategoryRequest request)
         {
@@ -41,7 +40,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<CategoryResponse>>> GetCategoryById([FromRoute] Guid id)
         {
             var response = await _categoryServices.GetByIdAsync(id);
@@ -51,7 +49,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("search")]
-        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<PagedResult<CategoryResponse>>>> GetAllPagingAsync([FromQuery] CategoryQueryRequest req)
         {
             var result = await _categoryServices.GetAllAsync(req);
@@ -60,7 +57,6 @@ namespace bidify_be.Controllers
 
 
         [HttpDelete("{id:guid}")]
-        [AllowAnonymous]
         //[Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteCategory([FromRoute] Guid id)
         {
@@ -71,7 +67,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpPatch("toggle-active/{id:guid}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleCategoryActiveStatus([FromRoute] Guid id)
         {
             var response = await _categoryServices.ToggleActiveAsync(id);

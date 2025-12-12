@@ -100,12 +100,11 @@ namespace bidify_be.Services.Implementations
         }
 
 
-        public async Task<IEnumerable<TagResponse>> GetAllTagsAsync()
+        public async Task<IEnumerable<TagResponse>> GetAllTagsAsync(TagQueryRequest req)
         {
             _logger.LogInformation("Retrieving all tags...");
 
-            var tags = await _unitOfWork.TagRepository.GetAllTagsAsync();
-            return _mapper.Map<IEnumerable<TagResponse>>(tags);
+            return await _unitOfWork.TagRepository.GetAllTagsAsync(req);
         }
 
 

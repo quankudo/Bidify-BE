@@ -3,5 +3,6 @@
     public interface ICurrentUserService
     {
         public string? GetUserId();
+        bool IsAdmin();
     }
 }

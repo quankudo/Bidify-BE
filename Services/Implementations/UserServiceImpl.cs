@@ -12,7 +12,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Org.BouncyCastle.Asn1.Ocsp;
 using System.Security.Cryptography;
 using System.Text;
 using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
@@ -98,7 +97,7 @@ namespace bidify_be.Services.Implementations
         }
 
 
-        public async Task<UserResponse> LoginAsync(UserLoginRequest request)
+        public async Task<TokenWithUserResponse> LoginAsync(UserLoginRequest request)
         {
             _logger.LogInformation("Login user: {Email}", request.Email);
 
@@ -109,7 +108,13 @@ namespace bidify_be.Services.Implementations
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
             {
                 _logger.LogError("Invalid email or password");
-                throw new Exception("Invalid email or password");
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+
+            if(!user.Status)
+            {
+                _logger.LogInformation("This Account of user {UserName} was locked", user.UserName);
+                throw new UnauthorizedAccessException("This account was locked");
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -125,7 +130,7 @@ namespace bidify_be.Services.Implementations
             using var sha256 = SHA256.Create();
             var refreshTokenHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
             user.RefreshToken = Convert.ToBase64String(refreshTokenHash);
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(2);
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
 
             user.CreateAt = DateTime.Now;
             // Update user information in database
@@ -138,11 +143,15 @@ namespace bidify_be.Services.Implementations
             }
 
             var userResponse = _mapper.Map<ApplicationUser, UserResponse>(user);
-            userResponse.AccessToken = token;
-            userResponse.RefreshToken = refreshToken;
             userResponse.Role = role;
+            var response = new TokenWithUserResponse
+            {
+                AccessToken = token,
+                RefreshToken = refreshToken,
+                User = userResponse
+            };
 
-            return userResponse;
+            return response;
         }
 
         public async Task<UserResponse> GetByIdAsync(Guid id)
@@ -542,5 +551,91 @@ namespace bidify_be.Services.Implementations
                 throw new Exception("Verify code expired");
             if (user.Status) throw new Exception("User is active");
         }
+
+        public async Task<PagedResult<UserResponse>> GetAllUsersAsync(UserQueryRequest req)
+        {
+            _logger.LogInformation("Fetching users...");
+
+            var usersQuery = _dbContext.Users.AsNoTracking().AsQueryable();
+
+            // SEARCH: UserName, Email, PhoneNumber
+            if (!string.IsNullOrWhiteSpace(req.Search))
+            {
+                string keyword = req.Search.Trim().ToLower();
+
+                usersQuery = usersQuery.Where(x =>
+                    x.UserName.ToLower().Contains(keyword) ||
+                    x.Email.ToLower().Contains(keyword) ||
+                    (x.PhoneNumber != null && x.PhoneNumber.ToLower().Contains(keyword))
+                );
+            }
+
+            // FILTER STATUS
+            if (req.Status.HasValue)
+            {
+                usersQuery = usersQuery.Where(x => x.Status == req.Status);
+            }
+
+            // FILTER ROLE (Join AspNetUserRoles + AspNetRoles)
+            if (!string.IsNullOrWhiteSpace(req.Role))
+            {
+                string roleName = req.Role.Trim();
+
+                usersQuery =
+                    from u in usersQuery
+                    join ur in _dbContext.UserRoles on u.Id equals ur.UserId
+                    join r in _dbContext.Roles on ur.RoleId equals r.Id
+                    where r.Name == roleName
+                    select u;
+            }
+
+            // Count tổng
+            int totalItems = await usersQuery.CountAsync();
+
+            // Select chỉ trường cần thiết (KHÔNG SELECT *)
+            var users = await usersQuery
+                .OrderByDescending(x => x.CreateAt)
+                .Skip((req.Page - 1) * req.PageSize)
+                .Take(req.PageSize)
+                .Select(x => new UserResponse
+                {
+                    Id = x.Id,
+                    UserName = x.UserName,
+                    Email = x.Email,
+                    Dob = x.Dob,
+                    PhoneNumber = x.PhoneNumber,
+                    Gender = x.Gender,
+                    Avatar = x.Avatar,
+                    ReferralCode = x.ReferralCode,
+                    BidCount = x.BidCount,
+                    Balance = x.Balance,
+                    RateStar = x.RateStar,
+                    CreateAt = x.CreateAt,
+                    Status = x.Status,
+                    UpdateAt = x.UpdateAt
+                    // Role sẽ được gán phía dưới
+                })
+                .ToListAsync();
+
+            // Lấy danh sách UserId sau khi paging
+            var userIds = users.Select(u => u.Id).ToList();
+
+            // Lấy Role tương ứng mỗi user
+            var userRoles = await (
+                from ur in _dbContext.UserRoles
+                join r in _dbContext.Roles on ur.RoleId equals r.Id
+                where userIds.Contains(ur.UserId)
+                select new { ur.UserId, r.Name }
+            ).ToListAsync();
+
+            // Gán role cho từng user
+            foreach (var u in users)
+            {
+                u.Role = userRoles.FirstOrDefault(x => x.UserId == u.Id)?.Name;
+            }
+
+            return new PagedResult<UserResponse>(users, totalItems, req.Page, req.PageSize);
+        }
+
     }
 }

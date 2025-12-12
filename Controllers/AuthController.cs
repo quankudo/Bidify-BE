@@ -35,10 +35,30 @@ namespace bidify_be.Controllers
         public async Task<ActionResult<ApiResponse<UserResponse>>> Login([FromBody] UserLoginRequest request)
         {
             var response = await _userService.LoginAsync(request);
+
+            // Set AccessToken cookie (ngắn hạn)
+            Response.Cookies.Append("jwt-token", response.AccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(2) // access token ngắn hạn
+            });
+
+            // Set RefreshToken cookie (dài hạn)
+            Response.Cookies.Append("refresh-token", response.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(7) // refresh token dài hạn
+            });
+
             return Ok(ApiResponse<UserResponse>.SuccessResponse(
-                response, "Login successful"
+                response.User, "Login successful"
             ));
         }
+
 
         [HttpPost("auth/verify-email")]
         [AllowAnonymous]
@@ -153,11 +173,24 @@ namespace bidify_be.Controllers
 
 
         [HttpDelete("user/{id}")]
-        [Authorize]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _userService.DeleteAsync(id);
             return Ok();
         }
+
+        [HttpGet("user/search")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<ApiResponse<PagedResult<UserResponse>>>> GetAllAsync([FromQuery] UserQueryRequest req)
+        {
+            var result = await _userService.GetAllUsersAsync(req);
+
+            return Ok(ApiResponse<PagedResult<UserResponse>>.SuccessResponse(
+                result,
+                "Fetched users successfully"
+            ));
+        }
+
     }
 }

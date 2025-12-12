@@ -70,7 +70,7 @@ namespace bidify_be.Services.Implementations
                 new Claim(ClaimTypes.NameIdentifier, user?.Id ?? string.Empty),
                 new Claim(ClaimTypes.Email, user?.Email ?? string.Empty),
                 new Claim(CustomClaimTypes.Avatar, user?.Avatar ?? string.Empty),
-                new Claim(CustomClaimTypes.Gender, user?.Gender ?? string.Empty)
+                new Claim(CustomClaimTypes.Gender, user?.Gender.ToString() ?? string.Empty)
             };
 
             var roles = await _userManager.GetRolesAsync(user);

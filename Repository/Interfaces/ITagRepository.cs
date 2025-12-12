@@ -1,10 +1,11 @@
 ﻿using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Tags;
 
 namespace bidify_be.Repository.Interfaces
 {
     public interface ITagRepository
     {
-        Task<IEnumerable<Tag>> GetAllTagsAsync();
+        Task<IEnumerable<TagResponse>> GetAllTagsAsync(TagQueryRequest req);
         Task<Tag?> GetTagByIdAsync(Guid id);
 
         Task<bool> ExistsByTitleAsync(string title);

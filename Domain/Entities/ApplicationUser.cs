@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using bidify_be.Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bidify_be.Domain.Entities
 {
     public class ApplicationUser : IdentityUser
     {
-        public string? Gender { get; set; }
+        public Gender? Gender { get; set; }
         public string? RefreshToken { get; set; }
         public int BidCount { get; set; } = 0;
         public DateTime? RefreshTokenExpiryTime { get; set; }

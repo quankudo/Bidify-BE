@@ -6,6 +6,7 @@ using bidify_be.DTOs.Category;
 using bidify_be.DTOs.Gift;
 using bidify_be.DTOs.GiftType;
 using bidify_be.DTOs.PackageBid;
+using bidify_be.DTOs.Product;
 using bidify_be.DTOs.Tags;
 using bidify_be.DTOs.Users;
 using bidify_be.DTOs.Voucher;
@@ -63,6 +64,39 @@ namespace bidify_be.Infrastructure.Mapping
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember, destMember) => !Equals(srcMember, destMember)));
             CreateMap<Voucher, VoucherResponse>();
 
+
+            CreateMap<Product, ProductResponse>();
+
+            // Product Mapping
+            CreateMap<AddProductRequest, Product>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.ProductTags, opt => opt.MapFrom(src => src.Tags))
+            .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images))
+            .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.Attributes));
+
+            CreateMap<UpdateProductRequest, Product>()
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(x => DateTime.UtcNow))
+            .ForMember(dest => dest.Images, opt => opt.Ignore())
+            .ForMember(dest => dest.Attributes, opt => opt.Ignore())
+            .ForMember(dest => dest.ProductTags, opt => opt.Ignore());
+
+            // Map ProductImageRequest → ProductImage
+            CreateMap<ProductImageRequest, ProductImage>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.ProductId, opt => opt.Ignore());
+
+            // Map ProductAttributeRequest → ProductAttribute
+            CreateMap<ProductAttributeRequest, ProductAttribute>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
+                .ForMember(dest => dest.ProductId, opt => opt.Ignore());
+
+            // Map ProductTagRequest → ProductTag
+            CreateMap<ProductTagRequest, ProductTag>()
+                .ForMember(dest => dest.ProductId, opt => opt.Ignore())
+                .ForMember(dest => dest.Product, opt => opt.Ignore())
+                .ForMember(dest => dest.Tag, opt => opt.Ignore());
         }
     }
 }

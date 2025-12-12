@@ -26,7 +26,7 @@ namespace bidify_be.Infrastructure.Configurations
                 .HasMaxLength(100);
 
             builder.Property(p => p.Thumbnail)
-                .HasMaxLength(500);
+                .HasMaxLength(300);
 
             builder.Property(p => p.Note)
                 .HasMaxLength(500);
@@ -41,6 +41,11 @@ namespace bidify_be.Infrastructure.Configurations
             builder.HasOne<Category>()
                .WithMany()
                .HasForeignKey(p => p.CategoryId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<ApplicationUser>()
+               .WithMany()
+               .HasForeignKey(p => p.UserId)
                .OnDelete(DeleteBehavior.Restrict);
 
             // Quan hệ 1 Product – N ProductImage

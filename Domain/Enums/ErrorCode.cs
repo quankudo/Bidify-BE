@@ -34,6 +34,9 @@ namespace bidify_be.Domain.Enums
         [Description("VALIDATION_FAILED")]
         ValidationFailed,
 
+        [Description("INVALID_CREDENTIALS")]
+        InvalidCredentials,
+
         [Description("UNAUTHORIZED_ACCESS")]
         UnauthorizedAccess
     }

@@ -19,9 +19,22 @@ namespace bidify_be.Exceptions
     }
     
 
+
+    public class InvalidCredentialsException : AppException
+    {
+        public InvalidCredentialsException(string message, ErrorCode errorCode = ErrorCode.InvalidCredentials)
+            : base(message, 401, errorCode) { }
+    }
+
     public class UserNotFoundException : AppException
     {
         public UserNotFoundException(string message, ErrorCode errorCode = ErrorCode.UserNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class ProductNotFoundException : AppException
+    {
+        public ProductNotFoundException(string message, ErrorCode errorCode = ErrorCode.ProductNotFound)
             : base(message, 404, errorCode) { }
     }
 
