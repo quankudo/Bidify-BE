@@ -63,7 +63,7 @@ namespace bidify_be.Controllers
         }
 
         // PUT /api/address/{id}/default
-        [HttpPut("{id:guid}/default")]
+        [HttpPatch("{id:guid}/default")]
         [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> SetDefaultAddressAsync(Guid id)
         {

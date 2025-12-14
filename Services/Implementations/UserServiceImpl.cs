@@ -111,10 +111,16 @@ namespace bidify_be.Services.Implementations
                 throw new InvalidCredentialsException("Invalid email or password");
             }
 
-            if(!user.Status)
+            if(!user.Status && user.EmailConfirmed)
             {
                 _logger.LogInformation("This Account of user {UserName} was locked", user.UserName);
                 throw new UnauthorizedAccessException("This account was locked");
+            }
+
+            if (!user.Status && !user.EmailConfirmed)
+            {
+                _logger.LogInformation("Account of user {UserName} is not verified", user.UserName);
+                throw new UnauthorizedAccessException("This account has not been verified yet");
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -331,12 +337,12 @@ namespace bidify_be.Services.Implementations
 
         public async Task VerifyEmail(VerifyEmailRequest request)
         {
-            _logger.LogInformation("Verifying email for user {UserId}", request.Id);
+            _logger.LogInformation("Verifying email for user {Email}", request.Email);
 
-            var user = await _userManager.FindByIdAsync(request.Id.ToString());
+            var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
             {
-                _logger.LogError("User not found: {UserId}", request.Id);
+                _logger.LogError("User not found: {Email}", request.Email);
                 throw new UserNotFoundException("User not found");
             }
 
@@ -437,14 +443,14 @@ namespace bidify_be.Services.Implementations
 
         public async Task ResendVerifyCode(ResendCodeRequest request)
         {
-            var user = await _userManager.FindByIdAsync(request.Id.ToString());
+            var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null) throw new Exception("User not found");
             if (user.Email != request.Email) throw new Exception("Email does not match");
             if (user.Status) throw new Exception("User is active");
 
             var now = DateTime.UtcNow;
             var codeLifetime = TimeSpan.FromMinutes(3); // mã sống 3 phút
-            var resendDelay = TimeSpan.FromMinutes(1);  // khoảng thời gian chờ 1 phút
+            var resendDelay = TimeSpan.FromMinutes(1.5);  // khoảng thời gian chờ 1 phút
 
             if (user.ExpireVerifyCode != null)
             {
@@ -452,7 +458,7 @@ namespace bidify_be.Services.Implementations
                 if (now < lastSentTime + resendDelay)
                 {
                     var waitSeconds = (lastSentTime + resendDelay - now).TotalSeconds;
-                    throw new Exception($"Please wait {Math.Ceiling(waitSeconds)} seconds before resending code");
+                    throw new ResendCodeTooSoonException($"Please wait {Math.Ceiling(waitSeconds)} seconds before resending code");
                 }
             }
 
@@ -467,18 +473,22 @@ namespace bidify_be.Services.Implementations
 
         public async Task ChangePassword(ChangePasswordRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var userId = _currentUserService.GetUserId();
+
+            _logger.LogInformation("Changing password for user have {UserId}", userId);
+
+            var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
             {
-                _logger.LogWarning("User not found: {Email}", request.Email);
+                _logger.LogWarning("User not found: {UserId}", userId);
                 throw new Exception("User not found");
             }
 
             // Check old password
             if (!await _userManager.CheckPasswordAsync(user, request.Password))
             {
-                _logger.LogWarning("Incorrect password for user {Email}", request.Email);
+                _logger.LogWarning("Incorrect password for user {UserId}", userId);
                 throw new Exception("Incorrect current password");
             }
 
@@ -542,14 +552,14 @@ namespace bidify_be.Services.Implementations
         private void ValidateEmailVerification(ApplicationUser user, VerifyEmailRequest request)
         {
             if (user.Email != request.Email)
-                throw new Exception("Email does not match");
+                throw new EmailMismatchException("Email does not match");
 
             if (user.VerifyCode != request.Code)
-                throw new Exception("Verify code does not match");
+                throw new VerifyCodeExpiredException("Verify code does not match");
 
             if (user.ExpireVerifyCode == null || user.ExpireVerifyCode < DateTime.UtcNow)
-                throw new Exception("Verify code expired");
-            if (user.Status) throw new Exception("User is active");
+                throw new VerifyCodeExpiredException("Verify code expired");
+            if (user.Status) throw new UserAlreadyVerifiedException("User is active");
         }
 
         public async Task<PagedResult<UserResponse>> GetAllUsersAsync(UserQueryRequest req)

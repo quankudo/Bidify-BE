@@ -36,11 +36,27 @@ namespace bidify_be.Services.Implementations
         
         public async Task<AddressResponse> AddAddressAsync(AddAddressRequest request)
         {
-            _logger.LogInformation("Creating address for user {UserId}", request.UserId);
-
             var currentUserId = _currentUserService.GetUserId();
 
-            AuthorizationHelper.EnsureSameUser(currentUserId, request.UserId);
+            request.UserId = currentUserId;
+
+            _logger.LogInformation("Creating address for user {UserId}", request.UserId);
+
+            int addressCount = await _unitOfWork.Addresses.GetAddressCountByUserAsync(currentUserId);
+
+            if (addressCount >= 4)
+            {
+                _logger.LogWarning(
+                    "User {UserId} reached max address count {Max}",
+                    currentUserId,
+                    4
+                );
+
+                throw new AddressLimitExceededException(
+                    $"Maximum {4} addresses allowed"
+                );
+            }
+
 
             var validation = await _addValidator.ValidateAsync(request);
             ValidationHelper.ThrowIfInvalid(validation, _logger);

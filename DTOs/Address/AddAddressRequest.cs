@@ -2,7 +2,7 @@
 {
     public class AddAddressRequest
     {
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public bool IsDefault { get; set; } = false;

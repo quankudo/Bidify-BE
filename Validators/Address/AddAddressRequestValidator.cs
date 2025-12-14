@@ -6,8 +6,6 @@ namespace bidify_be.Validators.Address
     public class AddAddressRequestValidator : AbstractValidator<AddAddressRequest>
     {
         public AddAddressRequestValidator() {
-            RuleFor(x => x.UserId)
-                .NotEmpty().WithMessage("UserId is required.");
 
             RuleFor(x=>x.UserName)
                 .NotEmpty().WithMessage("UserName is required.")

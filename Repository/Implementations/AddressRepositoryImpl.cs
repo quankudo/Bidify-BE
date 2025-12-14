@@ -14,6 +14,14 @@ namespace bidify_be.Repository.Implementations
             _context = context;
         }
 
+        public async Task<int> GetAddressCountByUserAsync(string userId)
+        {
+            return await _context.Addresses
+                .Where(a => a.UserId == userId)
+                .CountAsync();
+        }
+
+
         public async Task AddAddressAsync(Address address)
         {
             await _context.Addresses.AddAsync(address);

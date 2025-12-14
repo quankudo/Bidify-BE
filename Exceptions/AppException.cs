@@ -17,8 +17,42 @@ namespace bidify_be.Exceptions
             ErrorCodeString = errorCode.GetDescription();
         }
     }
-    
 
+    public class AddressLimitExceededException : AppException
+    {
+        public AddressLimitExceededException(string message, ErrorCode errorCode = ErrorCode.AddressLimitExceeded)
+            : base(message, 400, errorCode) { }
+    }
+
+    public class EmailMismatchException : AppException
+    {
+        public EmailMismatchException(string message, ErrorCode errorCode = ErrorCode.EmailMismatch)
+            : base(message, 400, errorCode) { }
+    }
+
+    public class InvalidVerifyCodeException : AppException
+    {
+        public InvalidVerifyCodeException(string message, ErrorCode errorCode = ErrorCode.InvalidVerifyCode)
+            : base(message, 400, errorCode) { }
+    }
+
+    public class VerifyCodeExpiredException : AppException
+    {
+        public VerifyCodeExpiredException(string message, ErrorCode errorCode = ErrorCode.VerifyCodeExpired)
+            : base(message, 400, errorCode) { }
+    }
+
+    public class UserAlreadyVerifiedException : AppException
+    {
+        public UserAlreadyVerifiedException(string message, ErrorCode errorCode = ErrorCode.UserAlreadyVerified)
+            : base(message, 400, errorCode) { }
+    }
+
+    public class ResendCodeTooSoonException : AppException
+    {
+        public ResendCodeTooSoonException(string message, ErrorCode errorCode = ErrorCode.ResendCodeTooSoon)
+            : base(message, 429, errorCode) { }
+    }
 
     public class InvalidCredentialsException : AppException
     {

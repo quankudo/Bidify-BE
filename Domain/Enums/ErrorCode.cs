@@ -37,8 +37,26 @@ namespace bidify_be.Domain.Enums
         [Description("INVALID_CREDENTIALS")]
         InvalidCredentials,
 
+        [Description("RESEND_CODE_TOO_SOON")]
+        ResendCodeTooSoon,
+
         [Description("UNAUTHORIZED_ACCESS")]
-        UnauthorizedAccess
+        UnauthorizedAccess,
+
+        [Description("EMAIL_MISMATCH")]
+        EmailMismatch,
+
+        [Description("INVALID_VERIFY_CODE")]
+        InvalidVerifyCode,
+
+        [Description("VERIFY_CODE_EXPIRED")]
+        VerifyCodeExpired,
+
+        [Description("ADDRESS_LIMIT_EXCEEDED")]
+        AddressLimitExceeded,
+
+        [Description("USER_ALREADY_VERIFIED")]
+        UserAlreadyVerified
     }
 
     public static class EnumExtensions

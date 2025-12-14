@@ -4,6 +4,7 @@ namespace bidify_be.Repository.Interfaces
 {
     public interface IAddressRepository
     {
+        Task<int> GetAddressCountByUserAsync(string userId);
         public Task AddAddressAsync(Address address);
         public Task<Address?> GetAddressByIdAsync(Guid id);
         public Task<List<Address>> GetAddressesByUserIdAsync(string userId);
