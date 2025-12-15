@@ -7,6 +7,7 @@ using bidify_be.DTOs.Users;
 using bidify_be.Exceptions;
 using bidify_be.Helpers;
 using bidify_be.Infrastructure.Context;
+using bidify_be.Infrastructure.UnitOfWork;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,8 @@ namespace bidify_be.Services.Implementations
         private readonly IValidator<UserRegisterRequest> _validatorRegister;
         private readonly IValidator<UserLoginRequest> _validatorLogin;
         private readonly IValidator<UpdateUserRequest> _validatorUpdateUser;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IFileStorageService _fileStorageService;
 
         public UserServiceImpl(
             ITokenService tokenService, 
@@ -41,7 +44,9 @@ namespace bidify_be.Services.Implementations
             IEmailService emailService,
             IValidator<UserRegisterRequest> validatorRegister,
             IValidator<UserLoginRequest> validatorLogin,
-            IValidator<UpdateUserRequest> validatorUpdateUser
+            IValidator<UpdateUserRequest> validatorUpdateUser,
+            IUnitOfWork unitOfWork,
+            IFileStorageService fileStorageService
             )
         {
             _tokenService = tokenService;
@@ -54,6 +59,8 @@ namespace bidify_be.Services.Implementations
             _validatorRegister = validatorRegister;
             _validatorLogin = validatorLogin;
             _validatorUpdateUser = validatorUpdateUser;
+            _unitOfWork = unitOfWork;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<UserRegisterResponse> RegisterAsync(UserRegisterRequest request)
@@ -283,28 +290,57 @@ namespace bidify_be.Services.Implementations
             ValidationHelper.ThrowIfInvalid(validationResult, _logger);
 
             var userId = _currentUserService.GetUserId();
-
             var user = await _userManager.FindByIdAsync(userId);
+
             if (user == null)
-            {
-                _logger.LogError("User not found");
                 throw new UserNotFoundException("User not found");
-            }
 
-            user.UpdateAt = DateTime.UtcNow;
-            user.UserName = request.UserName;
-            user.Gender = request.Gender;
-            user.Avatar = request.Avatar;
+            using var tx = await _unitOfWork.BeginTransactionAsync();
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
+            try
             {
-                _logger.LogError("Cập nhật user thất bại: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
-                throw new Exception("Cập nhật user thất bại");
+                // Đổi avatar
+                if (!string.IsNullOrEmpty(request.PublicId) &&
+                    request.PublicId != user.PublicId)
+                {
+                    // Mark avatar mới là USED
+                    await _fileStorageService.MarkAsUsedAsync(request.PublicId);
+
+                    // Xoá avatar cũ (cloud + db)
+                    if (!string.IsNullOrEmpty(user.PublicId))
+                    {
+                        await _fileStorageService.RequestDeleteAsync(user.PublicId);
+                    }
+
+                    user.Avatar = request.Avatar;
+                    user.PublicId = request.PublicId;
+                }
+
+                user.UserName = request.UserName;
+                user.Gender = request.Gender;
+                user.UpdateAt = DateTime.UtcNow;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    throw new Exception(string.Join(", ",
+                        result.Errors.Select(e => e.Description)));
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Update user failed");
+                throw;
             }
 
             return _mapper.Map<UserResponse>(user);
         }
+
+
 
 
         public async Task DeleteAsync(Guid id)

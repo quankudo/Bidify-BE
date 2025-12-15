@@ -76,7 +76,8 @@ namespace bidify_be.Repository.Implementations
                     Id = x.Id,
                     Title = x.Title,
                     ImageUrl = x.ImageUrl,
-                    Status = x.Status
+                    Status = x.Status,
+                    PublicId = x.PublicId
                 })
                 .ToListAsync();
 

@@ -18,6 +18,7 @@ namespace bidify_be.Infrastructure.Context
         public DbSet<ProductAttribute> ProductAttributes => Set<ProductAttribute>();
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
         public DbSet<ProductTag> ProductTags => Set<ProductTag>();
+        public DbSet<FileStorage> FileStorages => Set<FileStorage>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

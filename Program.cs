@@ -31,9 +31,11 @@ using bidify_be.Validators.Product;
 using bidify_be.Validators.Tags;
 using bidify_be.Validators.Users;
 using bidify_be.Validators.Voucher;
+using CloudinaryDotNet;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +68,22 @@ builder.Services.Configure<MailSettings>(
     builder.Configuration.GetSection("MailSettings"));
 builder.Services.AddTransient<IEmailService, EmailServiceImpl>();
 builder.Services.AddSingleton<RazorTemplateService>();
+
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("Cloudinary"));
+
+builder.Services.AddSingleton(sp =>
+{
+    var settings = sp.GetRequiredService<IOptions<CloudinarySettings>>().Value;
+
+    var account = new Account(
+        settings.CloudName,
+        settings.ApiKey,
+        settings.ApiSecret
+    );
+
+    return new Cloudinary(account);
+});
 
 // Adding Validators
 builder.Services.AddScoped<IValidator<UserRegisterRequest>, UserRegisterRequestValidator>();
@@ -108,6 +126,8 @@ builder.Services.AddScoped<IGiftTypeService, GiftTypeServiceImpl>();
 builder.Services.AddScoped<IGiftService, GiftServiceImpl>();
 builder.Services.AddScoped<IVoucherService, VoucherServiceImpl>();
 builder.Services.AddScoped<IProductService, ProductServiceImpl>();
+builder.Services.AddScoped<IFileStorageService, FileStorageServiceImpl>();
+builder.Services.AddScoped<ICloudStorageService, CloudStorageServiceImpl>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();
@@ -118,6 +138,7 @@ builder.Services.AddScoped<IGiftTypeRepository, GiftTypeRepositoryImpl>();
 builder.Services.AddScoped<IGiftRepository, GiftRepositoryImpl>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepositoryImpl>();
 builder.Services.AddScoped<IProductRepository, ProductRepositoryImpl>();
+builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Adding AutoMapper

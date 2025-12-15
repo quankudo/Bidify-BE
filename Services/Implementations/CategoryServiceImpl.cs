@@ -17,6 +17,7 @@ namespace bidify_be.Services.Implementations
         private readonly ILogger<CategoryServiceImpl> _logger;
         private readonly IValidator<AddCategoryRequest> _validatorAdd;
         private readonly IValidator<UpdateCategoryRequest> _validatorUpdate;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IMapper _mapper;
 
         public CategoryServiceImpl(
@@ -24,6 +25,7 @@ namespace bidify_be.Services.Implementations
             IValidator<UpdateCategoryRequest> validatorUpdate, 
             IValidator<AddCategoryRequest> validatorAdd, 
             ILogger<CategoryServiceImpl> logger,
+            IFileStorageService fileStorageService,
             IMapper mapper
             )
         {
@@ -31,6 +33,7 @@ namespace bidify_be.Services.Implementations
             _validatorUpdate = validatorUpdate;
             _validatorAdd = validatorAdd;
             _logger = logger;
+            _fileStorageService = fileStorageService;
             _mapper = mapper;
 
         }
@@ -53,9 +56,25 @@ namespace bidify_be.Services.Implementations
 
             newCat.CreatedAt = DateTime.UtcNow;
             newCat.UpdatedAt = DateTime.UtcNow;
+            newCat.Status = true;
 
-            await _unitOfWork.Categories.AddAsync(newCat);
-            await _unitOfWork.SaveChangesAsync();
+
+            using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                await _fileStorageService.MarkAsUsedAsync(request.PublicId);
+                await _unitOfWork.Categories.AddAsync(newCat);
+                await _unitOfWork.SaveChangesAsync();
+
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+
 
             _logger.LogInformation("Category added with ID: {Id}", newCat.Id);
 
@@ -118,7 +137,7 @@ namespace bidify_be.Services.Implementations
             }
             category.UpdatedAt = DateTime.UtcNow;
 
-            _unitOfWork.Categories.Update(category);
+            _unitOfWork.Categories.ToggleActive(category);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation(

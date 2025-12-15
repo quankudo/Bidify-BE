@@ -1,4 +1,5 @@
 ﻿using bidify_be.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace bidify_be.Infrastructure.UnitOfWork
 {
@@ -12,8 +13,11 @@ namespace bidify_be.Infrastructure.UnitOfWork
         IGiftRepository GiftRepository { get; }
         IVoucherRepository VoucherRepository { get; }
         IProductRepository ProductRepository { get; }
+        IFileStorageRepository FileStorageRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 
 }

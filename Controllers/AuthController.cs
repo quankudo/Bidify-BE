@@ -110,6 +110,18 @@ namespace bidify_be.Controllers
             ));
         }
 
+        [HttpPut("user")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateUserInfo([FromBody] UpdateUserRequest request)
+        {
+            var response = await _userService.UpdateAsync(request);
+
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(
+                response,
+                "Update user info successfully"
+            ));
+        }
+
 
         [HttpGet("user/{id}")]
         [Authorize]

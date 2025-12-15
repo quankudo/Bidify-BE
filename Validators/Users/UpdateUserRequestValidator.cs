@@ -12,7 +12,7 @@ namespace bidify_be.Validators.Users
                 .MaximumLength(50).WithMessage("User name must not exceed 50 characters");
 
             RuleFor(x => x.Gender)
-                .NotEmpty().WithMessage("Gender must be Male, Female, or Other");
+                .IsInEnum().WithMessage("Gender must be Male, Female, or Other");
 
             RuleFor(x => x.Avatar)
                 .Must(a => string.IsNullOrEmpty(a) || Uri.IsWellFormedUriString(a, UriKind.Absolute))

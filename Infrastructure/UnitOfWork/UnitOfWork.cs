@@ -1,5 +1,6 @@
 ﻿using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace bidify_be.Infrastructure.UnitOfWork
 {
@@ -15,6 +16,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
         public IGiftRepository GiftRepository { get; }
         public IVoucherRepository VoucherRepository { get; }
         public IProductRepository ProductRepository { get; }
+        public IFileStorageRepository FileStorageRepository { get; }
 
         public UnitOfWork(
             ApplicationDbContext context, 
@@ -25,7 +27,8 @@ namespace bidify_be.Infrastructure.UnitOfWork
             IGiftTypeRepository giftTypeRepository,
             IGiftRepository giftRepository,
             IVoucherRepository voucherRepository,
-            IProductRepository productRepository)
+            IProductRepository productRepository,
+            IFileStorageRepository fileStorageRepository)
         {
             _context = context;
             Categories = categories;
@@ -36,12 +39,16 @@ namespace bidify_be.Infrastructure.UnitOfWork
             GiftTypeRepository = giftTypeRepository;
             VoucherRepository = voucherRepository;
             ProductRepository = productRepository;
+            FileStorageRepository = fileStorageRepository;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return await _context.SaveChangesAsync(cancellationToken);
         }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        => await _context.Database.BeginTransactionAsync();
     }
 
 }
