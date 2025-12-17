@@ -8,6 +8,7 @@ namespace bidify_be.Repository.Interfaces
     {
         Task<Category?> GetByIdAsync(Guid id);
         Task<PagedResult<CategoryResponse>> GetAllAsync(CategoryQueryRequest req);
+        Task<List<CategoryShortResponse>> GetAllAsync();
         Task<bool> ExistsAsyncByName(string title);
         Task<bool> ExistsAsyncById(Guid id);
         Task<bool> ExistsAsyncByName(string title, Guid id);

@@ -67,11 +67,21 @@ namespace bidify_be.Infrastructure.Mapping
 
             CreateMap<Product, ProductResponse>();
 
+            // ===== Images =====
+            CreateMap<ProductImage, ProductImageResponse>();
+
+            // ===== Attributes =====
+            CreateMap<ProductAttribute, ProductAttributeResponse>();
+
+            // ===== Tags =====
+            CreateMap<ProductTag, ProductTagResponse>()
+                .ForMember(
+                    dest => dest.TagName,
+                    opt => opt.MapFrom(src => src.Tag.Title)
+                );
+
             // Product Mapping
             CreateMap<AddProductRequest, Product>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.ProductTags, opt => opt.MapFrom(src => src.Tags))
             .ForMember(dest => dest.Images, opt => opt.MapFrom(src => src.Images))
             .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.Attributes));
@@ -84,12 +94,10 @@ namespace bidify_be.Infrastructure.Mapping
 
             // Map ProductImageRequest → ProductImage
             CreateMap<ProductImageRequest, ProductImage>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore());
 
             // Map ProductAttributeRequest → ProductAttribute
             CreateMap<ProductAttributeRequest, ProductAttribute>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore());
 
             // Map ProductTagRequest → ProductTag

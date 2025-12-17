@@ -8,6 +8,7 @@ using bidify_be.Helpers;
 using bidify_be.Infrastructure.UnitOfWork;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
+using Org.BouncyCastle.Bcpg;
 using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
 
 namespace bidify_be.Services.Implementations
@@ -20,6 +21,7 @@ namespace bidify_be.Services.Implementations
         private readonly IValidator<AddProductRequest> _validatorAdd;
         private readonly IValidator<UpdateProductRequest> _validatorUpdate;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileStorageService _fileStorageService;
 
         public ProductServiceImpl(
             IUnitOfWork unitOfWork, 
@@ -27,7 +29,8 @@ namespace bidify_be.Services.Implementations
             ILogger<ProductServiceImpl> logger, 
             IValidator<AddProductRequest> validatorAdd,
             IValidator<UpdateProductRequest> validatorUpdate,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IFileStorageService fileStorageService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -35,6 +38,7 @@ namespace bidify_be.Services.Implementations
             _validatorAdd = validatorAdd;
             _validatorUpdate = validatorUpdate;
             _currentUserService = currentUserService;
+            _fileStorageService = fileStorageService;
         }
 
         private void EnsureAuthenticatedUser(string? userId)
@@ -65,28 +69,60 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Creating product with name: {Name}", request.Name);
 
-            // 1. Lấy User ID
+            // 1. Auth
             var userId = _currentUserService.GetUserId();
-
             EnsureAuthenticatedUser(userId);
 
             // 2. Validate
             await ValidateAsync(request, _validatorAdd);
 
-            // 3. Mapping AddProductRequest -> Product
+            // 3. Mapping
             var product = _mapper.Map<Product>(request);
-            product.UserId = userId; // set owner
+            product.UserId = userId;
             product.Status = ProductStatus.Pending;
+            product.CreatedAt = DateTime.UtcNow;
+            product.UpdatedAt = DateTime.UtcNow;
 
-            // 4. Insert
-            await _unitOfWork.ProductRepository.AddAsync(product);
-            await _unitOfWork.SaveChangesAsync();
+            using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                // 4. Mark thumbnail as used
+                if (!string.IsNullOrWhiteSpace(request.ThumbnailPublicId))
+                {
+                    await _fileStorageService.MarkAsUsedAsync(request.ThumbnailPublicId);
+                }
+
+                // 5. Mark product images as used
+                if (request.Images?.Any() == true)
+                {
+                    foreach (var img in request.Images)
+                    {
+                        if (!string.IsNullOrWhiteSpace(img.PublicId))
+                        {
+                            await _fileStorageService.MarkAsUsedAsync(img.PublicId);
+                        }
+                    }
+                }
+
+                // 6. Insert product
+                await _unitOfWork.ProductRepository.AddAsync(product);
+                await _unitOfWork.SaveChangesAsync();
+
+                await tx.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error while creating product");
+                throw;
+            }
 
             _logger.LogInformation("Product created successfully with Id: {Id}", product.Id);
 
-            // 5. Map to response
             return _mapper.Map<ProductResponse>(product);
         }
+
 
 
         public async Task<bool> DeleteProductAsyncByUser(Guid id)
@@ -116,37 +152,87 @@ namespace bidify_be.Services.Implementations
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
 
-            // 1. Validate
             await ValidateAsync(request, _validatorUpdate);
 
-            // 2. Load product + navigation
             var product = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(id);
             if (product == null)
                 throw new ProductNotFoundException($"Product {id} not found");
 
-            // 3. Check permission
             if (product.UserId != userId)
-            {
-                _logger.LogWarning("User {UserId} attempted to update product {ProductId} but is not the owner", userId, id);
                 throw new UnauthorizedAccessException("You do not have permission to update this product.");
+
+            using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                /* ===================== THUMBNAIL ===================== */
+                if (!string.IsNullOrWhiteSpace(request.ThumbnailPublicId) &&
+                    request.ThumbnailPublicId != product.ThumbnailPublicId)
+                {
+                    // Mark thumbnail mới
+                    await _fileStorageService.MarkAsUsedAsync(request.ThumbnailPublicId);
+
+                    // Soft delete thumbnail cũ
+                    if (!string.IsNullOrWhiteSpace(product.ThumbnailPublicId))
+                    {
+                        await _fileStorageService.RequestDeleteAsync(product.ThumbnailPublicId);
+                    }
+
+                    product.Thumbnail = request.Thumbnail;
+                    product.ThumbnailPublicId = request.ThumbnailPublicId;
+                }
+
+                /* ===================== PRODUCT IMAGES ===================== */
+                if (request.Images != null)
+                {
+                    var oldImagePublicIds = product.Images
+                        .Select(x => x.PublicId)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .ToHashSet();
+
+                    var newImagePublicIds = request.Images
+                        .Select(x => x.PublicId)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .ToHashSet();
+
+                    // 1. Mark ảnh mới
+                    foreach (var publicId in newImagePublicIds.Except(oldImagePublicIds))
+                    {
+                        await _fileStorageService.MarkAsUsedAsync(publicId);
+                    }
+
+                    // 2. Soft delete ảnh bị remove
+                    foreach (var publicId in oldImagePublicIds.Except(newImagePublicIds))
+                    {
+                        await _fileStorageService.RequestDeleteAsync(publicId);
+                    }
+
+                    // 3. Update collection
+                    UpdateCollections(product, request);
+                }
+
+                /* ===================== SIMPLE FIELDS ===================== */
+                _mapper.Map(request, product);
+
+                product.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.ProductRepository.Update(product);
+                await _unitOfWork.SaveChangesAsync();
+
+                await tx.CommitAsync();
             }
-
-            // 4. Map fields đơn giản
-            _mapper.Map(request, product);
-
-            UpdateCollections(product, request);
-
-            // 5. Update timestamp
-            product.UpdatedAt = DateTime.UtcNow;
-
-            // 6. Save
-            _unitOfWork.ProductRepository.Update(product);
-            await _unitOfWork.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Update product failed");
+                throw;
+            }
 
             _logger.LogInformation("Updated Product {Id} successfully", id);
 
             return _mapper.Map<ProductResponse>(product);
         }
+
 
         private void UpdateCollections(Product product, UpdateProductRequest request)
         {
@@ -177,11 +263,13 @@ namespace bidify_be.Services.Implementations
         }
 
 
-
         public async Task<PagedResult<ProductShortResponse>> FilterProductsAsync(ProductFilterRequest request)
         {
             _logger.LogInformation("Filtering products for UserId={UserId}, Admin={IsAdmin}",
                 request.UserId, request.IsAdmin);
+
+            var userId = _currentUserService.GetUserId();
+            request.UserId = userId;
 
             var result = await _unitOfWork.ProductRepository.FilterProductsAsync(request);
 

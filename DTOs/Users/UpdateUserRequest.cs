@@ -7,6 +7,7 @@ namespace bidify_be.DTOs.Users
         public string UserName { get; set; }
         public Gender Gender { get; set; }
         public string? Avatar { get; set; }
+        public DateTime? Dob { get; set; }
 
         public string? PublicId { get; set; }
     }

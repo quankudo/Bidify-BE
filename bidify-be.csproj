@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>bidify_be</RootNamespace>
     <PreserveCompilationContext>true</PreserveCompilationContext>
+    <UserSecretsId>d36da179-ac72-4004-9141-6aa92ab9938a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

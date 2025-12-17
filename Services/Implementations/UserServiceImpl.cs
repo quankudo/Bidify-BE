@@ -318,6 +318,11 @@ namespace bidify_be.Services.Implementations
 
                 user.UserName = request.UserName;
                 user.Gender = request.Gender;
+                if (request.Dob.HasValue)
+                {
+                    // giữ nguyên ngày, set giờ 00:00:00
+                    user.Dob = request.Dob.Value.Date;
+                }
                 user.UpdateAt = DateTime.UtcNow;
 
                 var result = await _userManager.UpdateAsync(user);

@@ -8,8 +8,6 @@ namespace bidify_be.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
-    //[Authorize(Roles = "admin")]
     public class TagController : ControllerBase
     {
         private readonly ITagService _tagService;
@@ -20,6 +18,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<TagResponse>>> GetTagById([FromRoute] Guid id)
         {
             var response = await _tagService.GetTagByIdAsync(id);
@@ -27,6 +26,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("search")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<IEnumerable<TagResponse>>>> GetAllTags([FromQuery] TagQueryRequest queryRequest)
         {
             var response = await _tagService.GetAllTagsAsync(queryRequest);
@@ -36,6 +36,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<TagResponse>>> CreateTag([FromBody] AddTagRequest request)
         {
             var response = await _tagService.CreateTagAsync(request);
@@ -45,6 +46,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<TagResponse>>> UpdateTag([FromRoute] Guid id, [FromBody] UpdateTagRequest request)
         {
             var response = await _tagService.UpdateTagAsync(id, request);
@@ -54,6 +56,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteTag([FromRoute] Guid id)
         {
             await _tagService.DeleteTagAsync(id);
@@ -63,6 +66,7 @@ namespace bidify_be.Controllers
         }
 
         [HttpPatch("toggle-active/{id:guid}")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleTagActiveStatus([FromRoute] Guid id)
         {
             await _tagService.ToggleActiveAsync(id);

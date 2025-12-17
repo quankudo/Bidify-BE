@@ -10,6 +10,7 @@ namespace bidify_be.DTOs.Product
         public string? Brand { get; set; }
         public ProductCondition Condition { get; set; }
         public string Thumbnail { get; set; } = string.Empty;
+        public string ThumbnailPublicId { get; set; } = string.Empty;
 
         public ICollection<ProductImageRequest> Images { get; set; } = new List<ProductImageRequest>();
         public ICollection<ProductAttributeRequest> Attributes { get; set; } = new List<ProductAttributeRequest>();

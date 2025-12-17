@@ -84,6 +84,16 @@ namespace bidify_be.Repository.Implementations
             return new PagedResult<CategoryResponse>(items, totalItems, req.Page, req.PageSize);
         }
 
+        public async Task<List<CategoryShortResponse>> GetAllAsync()
+        {
+            return await _context.Categories.AsNoTracking()
+                .Select(x => new CategoryShortResponse
+                {
+                    Id = x.Id,
+                    Title = x.Title
+                })
+                .ToListAsync();
+        }
 
         public async Task<Category?> GetByIdAsync(Guid id)
         {

@@ -102,14 +102,18 @@ namespace bidify_be.Services.Implementations
         }
 
 
-        public async Task<PagedResult<CategoryResponse>> GetAllAsync(CategoryQueryRequest req)
+        public async Task<PagedResult<CategoryResponse>> FilterAsync(CategoryQueryRequest req)
         {
             _logger.LogInformation("Get all categories with paging/search/filter");
             return await _unitOfWork.Categories.GetAllAsync(req);
         }
 
 
-
+        public async Task<List<CategoryShortResponse>> GetAllAsync()
+        {
+            _logger.LogInformation("Get all categories");
+            return await _unitOfWork.Categories.GetAllAsync();
+        }
 
         public async Task<CategoryResponse> GetByIdAsync(Guid id)
         {

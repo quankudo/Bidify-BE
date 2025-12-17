@@ -17,6 +17,11 @@ namespace bidify_be.Validators.Users
             RuleFor(x => x.Avatar)
                 .Must(a => string.IsNullOrEmpty(a) || Uri.IsWellFormedUriString(a, UriKind.Absolute))
                 .WithMessage("Avatar must be a valid URL");
+
+            RuleFor(x => x.Dob)
+                .LessThan(DateTime.Today)
+                .WithMessage("Date of birth must be in the past")
+                .When(x => x.Dob.HasValue);
         }
     }
 }

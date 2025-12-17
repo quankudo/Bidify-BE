@@ -6,7 +6,8 @@ namespace bidify_be.Services.Interfaces
     public interface ICategoryServices
     {
         Task<CategoryResponse> GetByIdAsync(Guid id);
-        Task<PagedResult<CategoryResponse>> GetAllAsync(CategoryQueryRequest req);
+        Task<List<CategoryShortResponse>> GetAllAsync();
+        Task<PagedResult<CategoryResponse>> FilterAsync(CategoryQueryRequest req);
         Task<CategoryResponse> CreateAsync(AddCategoryRequest request);
         Task<CategoryResponse> UpdateAsync(Guid id, UpdateCategoryRequest request);
         Task<bool> DeleteAsync(Guid id);
