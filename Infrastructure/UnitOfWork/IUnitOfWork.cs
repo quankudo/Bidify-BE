@@ -14,6 +14,9 @@ namespace bidify_be.Infrastructure.UnitOfWork
         IVoucherRepository VoucherRepository { get; }
         IProductRepository ProductRepository { get; }
         IFileStorageRepository FileStorageRepository { get; }
+        ITopupTransactionRepository TopupTransactionRepository { get; }
+        IWalletTransactionRepository WalletTransactionRepository { get; }
+        ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

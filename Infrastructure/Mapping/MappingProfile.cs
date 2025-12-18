@@ -87,7 +87,6 @@ namespace bidify_be.Infrastructure.Mapping
             .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.Attributes));
 
             CreateMap<UpdateProductRequest, Product>()
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(x => DateTime.UtcNow))
             .ForMember(dest => dest.Images, opt => opt.Ignore())
             .ForMember(dest => dest.Attributes, opt => opt.Ignore())
             .ForMember(dest => dest.ProductTags, opt => opt.Ignore());

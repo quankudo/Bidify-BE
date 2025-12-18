@@ -8,7 +8,7 @@ using bidify_be.Helpers;
 using bidify_be.Infrastructure.UnitOfWork;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
-using Org.BouncyCastle.Bcpg;
+using Microsoft.EntityFrameworkCore;
 using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
 
 namespace bidify_be.Services.Implementations
@@ -169,10 +169,8 @@ namespace bidify_be.Services.Implementations
                 if (!string.IsNullOrWhiteSpace(request.ThumbnailPublicId) &&
                     request.ThumbnailPublicId != product.ThumbnailPublicId)
                 {
-                    // Mark thumbnail mới
                     await _fileStorageService.MarkAsUsedAsync(request.ThumbnailPublicId);
 
-                    // Soft delete thumbnail cũ
                     if (!string.IsNullOrWhiteSpace(product.ThumbnailPublicId))
                     {
                         await _fileStorageService.RequestDeleteAsync(product.ThumbnailPublicId);
@@ -185,41 +183,56 @@ namespace bidify_be.Services.Implementations
                 /* ===================== PRODUCT IMAGES ===================== */
                 if (request.Images != null)
                 {
-                    var oldImagePublicIds = product.Images
-                        .Select(x => x.PublicId)
-                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                    var oldPublicIds = product.Images
+                        .Where(x => !string.IsNullOrEmpty(x.PublicId))
+                        .Select(x => x.PublicId!)
                         .ToHashSet();
 
-                    var newImagePublicIds = request.Images
-                        .Select(x => x.PublicId)
-                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                    var newPublicIds = request.Images
+                        .Where(x => !string.IsNullOrEmpty(x.PublicId))
+                        .Select(x => x.PublicId!)
                         .ToHashSet();
 
-                    // 1. Mark ảnh mới
-                    foreach (var publicId in newImagePublicIds.Except(oldImagePublicIds))
+                    foreach (var publicId in newPublicIds.Except(oldPublicIds))
                     {
                         await _fileStorageService.MarkAsUsedAsync(publicId);
                     }
 
-                    // 2. Soft delete ảnh bị remove
-                    foreach (var publicId in oldImagePublicIds.Except(newImagePublicIds))
+                    foreach (var publicId in oldPublicIds.Except(newPublicIds))
                     {
                         await _fileStorageService.RequestDeleteAsync(publicId);
                     }
 
-                    // 3. Update collection
-                    UpdateCollections(product, request);
+                    UpdateImages(product, request);
+                }
+
+                /* ===================== ATTRIBUTES ===================== */
+                if (request.Attributes != null)
+                {
+                    UpdateAttributes(product, request);
+                }
+
+                /* ===================== TAGS ===================== */
+                if (request.Tags != null)
+                {
+                    UpdateTags(product, request);
                 }
 
                 /* ===================== SIMPLE FIELDS ===================== */
                 _mapper.Map(request, product);
 
+                product.UserId = userId;
+                product.Status = ProductStatus.Pending;
                 product.UpdatedAt = DateTime.UtcNow;
 
-                _unitOfWork.ProductRepository.Update(product);
                 await _unitOfWork.SaveChangesAsync();
-
                 await tx.CommitAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Concurrency error when updating product {Id}", id);
+                throw new ProductNotFoundException("Product has been modified or deleted.");
             }
             catch (Exception ex)
             {
@@ -229,38 +242,121 @@ namespace bidify_be.Services.Implementations
             }
 
             _logger.LogInformation("Updated Product {Id} successfully", id);
-
             return _mapper.Map<ProductResponse>(product);
         }
 
 
-        private void UpdateCollections(Product product, UpdateProductRequest request)
+        private void UpdateImages(Product product, UpdateProductRequest request)
         {
-            product.Images = request.Images
-                .Select(img => new ProductImage
-                {
-                    Id = Guid.NewGuid(),
-                    ImageUrl = img.ImageUrl,
-                    PublicId = img.PublicId,
-                    ProductId = product.Id
-                }).ToList();
+            var reqImages = request.Images ?? [];
 
-            product.Attributes = request.Attributes
-                .Select(attr => new ProductAttribute
-                {
-                    Id = Guid.NewGuid(),
-                    Key = attr.Key,
-                    Value = attr.Value,
-                    ProductId = product.Id
-                }).ToList();
+            var dbByPublicId = product.Images
+                .Where(x => !string.IsNullOrEmpty(x.PublicId))
+                .ToDictionary(x => x.PublicId!);
 
-            product.ProductTags = request.Tags
-                .Select(tag => new ProductTag
+            var reqPublicIds = reqImages
+                .Where(x => !string.IsNullOrEmpty(x.PublicId))
+                .Select(x => x.PublicId!)
+                .ToHashSet();
+
+            // REMOVE
+            foreach (var img in product.Images.ToList())
+            {
+                if (string.IsNullOrEmpty(img.PublicId) || !reqPublicIds.Contains(img.PublicId))
                 {
-                    ProductId = product.Id,
-                    TagId = tag.TagId
-                }).ToList();
+                    product.Images.Remove(img);
+                }
+            }
+
+            // ADD / UPDATE
+            foreach (var req in reqImages)
+            {
+                if (dbByPublicId.TryGetValue(req.PublicId!, out var existing))
+                {
+                    existing.ImageUrl = req.ImageUrl;
+                }
+                else
+                {
+                    product.Images.Add(new ProductImage
+                    {
+                        Id = Guid.NewGuid(),
+                        ImageUrl = req.ImageUrl,
+                        PublicId = req.PublicId,
+                        ProductId = product.Id
+                    });
+                }
+            }
         }
+
+        private void UpdateAttributes(Product product, UpdateProductRequest request)
+        {
+            var reqAttrs = request.Attributes ?? [];
+
+            var dbByKey = product.Attributes
+                .ToDictionary(x => x.Key);
+
+            var reqKeys = reqAttrs
+                .Select(x => x.Key)
+                .ToHashSet();
+
+            foreach (var attr in product.Attributes.ToList())
+            {
+                if (!reqKeys.Contains(attr.Key))
+                {
+                    product.Attributes.Remove(attr);
+                }
+            }
+
+            foreach (var req in reqAttrs)
+            {
+                if (dbByKey.TryGetValue(req.Key, out var existing))
+                {
+                    existing.Value = req.Value;
+                }
+                else
+                {
+                    product.Attributes.Add(new ProductAttribute
+                    {
+                        Id = Guid.NewGuid(),
+                        Key = req.Key,
+                        Value = req.Value,
+                        ProductId = product.Id
+                    });
+                }
+            }
+        }
+
+        private void UpdateTags(Product product, UpdateProductRequest request)
+        {
+            var reqTagIds = request.Tags?
+                .Select(x => x.TagId)
+                .ToHashSet() ?? [];
+
+            var dbTagIds = product.ProductTags
+                .Select(x => x.TagId)
+                .ToHashSet();
+
+            foreach (var tag in product.ProductTags.ToList())
+            {
+                if (!reqTagIds.Contains(tag.TagId))
+                {
+                    product.ProductTags.Remove(tag);
+                }
+            }
+
+            foreach (var tagId in reqTagIds)
+            {
+                if (!dbTagIds.Contains(tagId))
+                {
+                    product.ProductTags.Add(new ProductTag
+                    {
+                        ProductId = product.Id,
+                        TagId = tagId
+                    });
+                }
+            }
+        }
+
 
 
         public async Task<PagedResult<ProductShortResponse>> FilterProductsAsync(ProductFilterRequest request)

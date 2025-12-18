@@ -118,6 +118,7 @@ namespace bidify_be.Repository.Implementations
                                                 Condition = p.Condition,
                                                 Thumbnail = p.Thumbnail,
                                                 Note = p.Note,
+                                                ThumbnailPublicId = p.ThumbnailPublicId,
                                                 Images = p.Images.Select(img => new ProductImageResponse
                                                 {
                                                     Id = img.Id,

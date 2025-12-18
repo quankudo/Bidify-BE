@@ -17,6 +17,9 @@ namespace bidify_be.Infrastructure.UnitOfWork
         public IVoucherRepository VoucherRepository { get; }
         public IProductRepository ProductRepository { get; }
         public IFileStorageRepository FileStorageRepository { get; }
+        public IWalletTransactionRepository WalletTransactionRepository { get; }
+        public ITopupTransactionRepository TopupTransactionRepository { get; }
+        public ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
 
         public UnitOfWork(
             ApplicationDbContext context, 
@@ -28,7 +31,10 @@ namespace bidify_be.Infrastructure.UnitOfWork
             IGiftRepository giftRepository,
             IVoucherRepository voucherRepository,
             IProductRepository productRepository,
-            IFileStorageRepository fileStorageRepository)
+            IFileStorageRepository fileStorageRepository,
+            ITopupTransactionRepository topupTransactionRepository,
+            IWalletTransactionRepository walletTransactionRepository,
+            ITransitionPackageBidRepository transitionPackageBidRepository)
         {
             _context = context;
             Categories = categories;
@@ -40,6 +46,9 @@ namespace bidify_be.Infrastructure.UnitOfWork
             VoucherRepository = voucherRepository;
             ProductRepository = productRepository;
             FileStorageRepository = fileStorageRepository;
+            TopupTransactionRepository = topupTransactionRepository;
+            WalletTransactionRepository = walletTransactionRepository;
+            TransitionPackageBidRepository = transitionPackageBidRepository;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -19,6 +19,10 @@ namespace bidify_be.Infrastructure.Context
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
         public DbSet<ProductTag> ProductTags => Set<ProductTag>();
         public DbSet<FileStorage> FileStorages => Set<FileStorage>();
+        public DbSet<TopupTransaction> TopupTransactions { get; set; }
+        public DbSet<WalletTransaction> WalletTransactions { get; set; }
+        public DbSet<TransitionPackageBid> TransitionPackagesBids { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

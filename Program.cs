@@ -8,6 +8,7 @@ using bidify_be.DTOs.GiftType;
 using bidify_be.DTOs.PackageBid;
 using bidify_be.DTOs.Product;
 using bidify_be.DTOs.Tags;
+using bidify_be.DTOs.TransitionPackageBid;
 using bidify_be.DTOs.Users;
 using bidify_be.DTOs.Voucher;
 using bidify_be.Exceptions;
@@ -29,6 +30,7 @@ using bidify_be.Validators.GiftType;
 using bidify_be.Validators.PackageBid;
 using bidify_be.Validators.Product;
 using bidify_be.Validators.Tags;
+using bidify_be.Validators.TransitionPackageBid;
 using bidify_be.Validators.Users;
 using bidify_be.Validators.Voucher;
 using CloudinaryDotNet;
@@ -114,6 +116,8 @@ builder.Services.AddScoped<IValidator<UpdateVoucherRequest>, UpdateVoucherReques
 builder.Services.AddScoped<IValidator<AddProductRequest>, AddProductRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateProductRequest>, UpdateProductRequestValidator>();
 
+builder.Services.AddScoped<IValidator<TransitionPackageBidRequest>, TransitionPackageBidRequestValidator>();
+
 // Adding Services  
 builder.Services.AddScoped<IUserServices, UserServiceImpl>();
 builder.Services.AddScoped<ITokenService, TokenServiceImpl>();
@@ -128,6 +132,9 @@ builder.Services.AddScoped<IVoucherService, VoucherServiceImpl>();
 builder.Services.AddScoped<IProductService, ProductServiceImpl>();
 builder.Services.AddScoped<IFileStorageService, FileStorageServiceImpl>();
 builder.Services.AddScoped<ICloudStorageService, CloudStorageServiceImpl>();
+builder.Services.AddScoped<ITopupService, TopupService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();
@@ -139,6 +146,9 @@ builder.Services.AddScoped<IGiftRepository, GiftRepositoryImpl>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepositoryImpl>();
 builder.Services.AddScoped<IProductRepository, ProductRepositoryImpl>();
 builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
+builder.Services.AddScoped<ITopupTransactionRepository, TopupTransactionRepositoryImpl>();
+builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepositoryImpl>();
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Adding AutoMapper

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using bidify_be.Infrastructure.Context;
 
@@ -10,9 +11,11 @@ using bidify_be.Infrastructure.Context;
 namespace bidify_be.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251218112347_AddTableTopupAndWallet")]
+    partial class AddTableTopupAndWallet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -715,37 +718,6 @@ namespace bidify_be.Migrations
                     b.ToTable("topup_transactions", (string)null);
                 });
 
-            modelBuilder.Entity("bidify_be.Domain.Entities.TransitionPackageBid", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<int>("BidCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("PackageBidId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PackageBidId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("TransitionPackageBids", (string)null);
-                });
-
             modelBuilder.Entity("bidify_be.Domain.Entities.Voucher", b =>
                 {
                     b.Property<Guid>("Id")
@@ -963,21 +935,6 @@ namespace bidify_be.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Tag");
-                });
-
-            modelBuilder.Entity("bidify_be.Domain.Entities.TransitionPackageBid", b =>
-                {
-                    b.HasOne("bidify_be.Domain.Entities.PackageBid", null)
-                        .WithMany()
-                        .HasForeignKey("PackageBidId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("bidify_be.Domain.Entities.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.Voucher", b =>

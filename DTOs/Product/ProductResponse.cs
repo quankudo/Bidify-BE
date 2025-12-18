@@ -14,6 +14,7 @@ namespace bidify_be.DTOs.Product
         public ProductStatus Status { get; set; }
         public ProductCondition Condition { get; set; }
         public string Thumbnail { get; set; } = string.Empty;
+        public string ThumbnailPublicId { get; set; } = string.Empty;
         public string? Note { get; set; }
 
         public ICollection<ProductImageResponse> Images { get; set; } = new List<ProductImageResponse>();
