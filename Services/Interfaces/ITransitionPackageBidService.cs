@@ -8,6 +8,6 @@ namespace bidify_be.Services.Interfaces
     public interface ITransitionPackageBidService
     {
         Task<TransitionPackageBid> CreateAsync(TransitionPackageBidRequest request);
-        Task<List<TransitionPackageBidResponse>> GetAllByUserIdAsync();
+        Task<List<TransitionPackageBidResponse>> GetAllByUserIdAsync(TransitionPackageBidQuery req);
     }
 }

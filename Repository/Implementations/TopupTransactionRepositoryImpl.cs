@@ -1,4 +1,5 @@
 ﻿using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Topup;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,39 @@ namespace bidify_be.Repository.Implementations
             _context.TopupTransactions.Update(transaction);
             return Task.CompletedTask;
         }
+
+        public async Task<List<TopupTransactionResponse>> GetAllByUserIdAsync(string userId, TopupRequestQuery req)
+        {
+            var query = _context.TopupTransactions
+                .AsNoTracking()
+                .Where(t => t.UserId == userId);
+
+            if (req.PaymentMethod.HasValue)
+            {
+                query = query.Where(t => t.PaymentMethod == req.PaymentMethod.Value);
+            }
+
+            if (req.Status.HasValue)
+            {
+                query = query.Where(t => t.Status == req.Status.Value);
+            }
+
+            return await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip(req.Skip)
+                .Take(req.Take)
+                .Select(t => new TopupTransactionResponse
+                {
+                    Id = t.Id,
+                    Amount = t.Amount,
+                    Status = t.Status,
+                    PaymentMethod = t.PaymentMethod,
+                    TransactionCode = t.TransactionCode,
+                    CreatedAt = t.CreatedAt
+                })
+                .ToListAsync();
+        }
+
     }
 
 }

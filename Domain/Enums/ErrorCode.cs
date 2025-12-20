@@ -55,6 +55,12 @@ namespace bidify_be.Domain.Enums
         [Description("ADDRESS_LIMIT_EXCEEDED")]
         AddressLimitExceeded,
 
+        [Description("INVALID_PRODUCT_STATE")]
+        InvalidProductState,
+
+        [Description("INSUFFICIENT_BALANCE")]
+        InsufficientBalance,
+
         [Description("USER_ALREADY_VERIFIED")]
         UserAlreadyVerified
     }

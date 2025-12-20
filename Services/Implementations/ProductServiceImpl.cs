@@ -363,7 +363,7 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Filtering products for UserId={UserId}, Admin={IsAdmin}",
                 request.UserId, request.IsAdmin);
-
+            request.IsAdmin = false;
             var userId = _currentUserService.GetUserId();
             request.UserId = userId;
 
@@ -421,6 +421,89 @@ namespace bidify_be.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Product {ProductId} deleted successfully by admin", id);
+            return true;
+        }
+
+        public async Task<bool> ApproveProductAsync(Guid id)
+        {
+            _logger.LogInformation("Approving product {ProductId}", id);
+
+            var product = await _unitOfWork.ProductRepository.GetProductByAdmin(id);
+            if (product == null)
+            {
+                _logger.LogWarning("Product {ProductId} not found for approval", id);
+                throw new ProductNotFoundException("Product not found");
+            }
+
+            if (product.Status != ProductStatus.Pending)
+            {
+                _logger.LogWarning(
+                    "Invalid status transition for product {ProductId}. Current: {Status}",
+                    id, product.Status);
+
+                throw new InvalidProductStateException("Invalid product status");
+            }
+
+
+            if (product.Status == ProductStatus.Active)
+            {
+                _logger.LogInformation(
+                    "Product {ProductId} is already approved (Status = Active)", id);
+                return true;
+            }
+
+            product.Status = ProductStatus.Active;
+
+            _unitOfWork.ProductRepository.Update(product);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Product {ProductId} approved successfully", id);
+
+            return true;
+        }
+
+
+        public async Task<bool> RejectProductAsync(RejectProductRequest req)
+        {
+            _logger.LogInformation(
+                "Rejecting product {ProductId} with reason: {Reason}",
+                req.Id, req.Reason);
+
+            var product = await _unitOfWork.ProductRepository.GetProductByAdmin(req.Id);
+            if (product == null)
+            {
+                _logger.LogWarning(
+                    "Product {ProductId} not found for rejection", req.Id);
+                throw new ProductNotFoundException("Product not found");
+            }
+
+            if (product.Status != ProductStatus.Pending)
+            {
+                _logger.LogWarning(
+                    "Invalid status transition for product {ProductId}. Current: {Status}",
+                    product.Id, product.Status);
+
+                throw new InvalidProductStateException("Invalid product status");
+            }
+
+
+            if (product.Status == ProductStatus.Cancelled)
+            {
+                _logger.LogInformation(
+                    "Product {ProductId} already rejected (Status = Cancelled)", req.Id);
+                return true;
+            }
+
+            product.Status = ProductStatus.Cancelled;
+            product.Note = req.Reason;
+
+            _unitOfWork.ProductRepository.Update(product);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Product {ProductId} rejected successfully", req.Id);
+
             return true;
         }
 

@@ -1,5 +1,6 @@
 ﻿using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
+using bidify_be.DTOs;
 using bidify_be.Infrastructure.UnitOfWork;
 using bidify_be.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -8,13 +9,16 @@ public class WalletService : IWalletService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUserService;
 
     public WalletService(
         UserManager<ApplicationUser> userManager,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
     {
         _userManager = userManager;
         _unitOfWork = unitOfWork;
+        _currentUserService = currentUserService;
     }
 
     public async Task CreditAsync(
@@ -43,5 +47,11 @@ public class WalletService : IWalletService
 
         await _unitOfWork.WalletTransactionRepository.AddAsync(walletTx);
         await _userManager.UpdateAsync(user);
+    }
+
+    public async Task<List<WalletTransaction>> GetAllByUserIdAsync(WalletTransactionQuery req)
+    {
+        var userId = _currentUserService.GetUserId();
+        return await _unitOfWork.WalletTransactionRepository.GetAllByUserIdAsync(req, userId);
     }
 }

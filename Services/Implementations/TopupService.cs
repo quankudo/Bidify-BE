@@ -14,12 +14,14 @@ public class TopupService : ITopupService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IVnPayService _paymentGateway; // VNPay abstraction
     private readonly ICurrentUserService _currentUserService;
+    private readonly ILogger<TopupService> _logger;
 
     public TopupService(
         IUnitOfWork unitOfWork,
         IWalletService walletService,
         UserManager<ApplicationUser> userManager,
         IVnPayService paymentGateway,
+        ILogger<TopupService> logger,
         ICurrentUserService currentUserService)
     {
         _unitOfWork = unitOfWork;
@@ -27,6 +29,7 @@ public class TopupService : ITopupService
         _userManager = userManager;
         _paymentGateway = paymentGateway;
         _currentUserService = currentUserService;
+        _logger = logger;
     }
 
 
@@ -76,6 +79,31 @@ public class TopupService : ITopupService
         };
     }
 
+    public async Task<List<TopupTransactionResponse>> GetTopupTransactionsByUserIdAsync(TopupRequestQuery req)
+    {
+        var userId = _currentUserService.GetUserId();
+
+        _logger.LogInformation(
+            "Get topup transactions | UserId: {UserId}, Skip: {Skip}, Take: {Take}, PaymentMethod: {PaymentMethod}, Status: {Status}",
+            userId,
+            req.Skip,
+            req.Take,
+            req.PaymentMethod,
+            req.Status
+        );
+
+        var result = await _unitOfWork
+            .TopupTransactionRepository
+            .GetAllByUserIdAsync(userId, req);
+
+        _logger.LogInformation(
+            "Get topup transactions success | UserId: {UserId}, Count: {Count}",
+            userId,
+            result.Count
+        );
+
+        return result;
+    }
 
 
     // ================================

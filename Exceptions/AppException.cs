@@ -24,6 +24,29 @@ namespace bidify_be.Exceptions
             : base(message, 400, errorCode) { }
     }
 
+    public class InvalidProductStateException : AppException
+    {
+        public InvalidProductStateException(
+            string message,
+            ErrorCode errorCode = ErrorCode.InvalidProductState)
+            : base(message, 400, errorCode)
+        {
+        }
+    }
+
+
+    public class InsufficientBalanceException : AppException
+    {
+        public InsufficientBalanceException(
+            string message,
+            ErrorCode errorCode = ErrorCode.InsufficientBalance
+        )
+            : base(message, 400, errorCode)
+        {
+        }
+    }
+
+
     public class EmailMismatchException : AppException
     {
         public EmailMismatchException(string message, ErrorCode errorCode = ErrorCode.EmailMismatch)

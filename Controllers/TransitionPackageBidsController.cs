@@ -45,9 +45,9 @@ namespace bidify_be.Controllers
 
         [HttpGet("user")]
         [Authorize] 
-        public async Task<ActionResult<ApiResponse<List<TransitionPackageBidResponse>>>> GetAllByUserId()
+        public async Task<ActionResult<ApiResponse<List<TransitionPackageBidResponse>>>> GetAllByUserId([FromQuery] TransitionPackageBidQuery req)
         {
-            var bids = await _service.GetAllByUserIdAsync();
+            var bids = await _service.GetAllByUserIdAsync(req);
 
             return Ok(ApiResponse<List<TransitionPackageBidResponse>>.SuccessResponse(
                 bids, $"Fetched successfully {bids.Count} TransitionPackageBids"

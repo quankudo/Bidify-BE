@@ -1,4 +1,5 @@
-﻿using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Entities;
+using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Topup;
 
 namespace bidify_be.Services.Interfaces
@@ -18,6 +19,8 @@ namespace bidify_be.Services.Interfaces
             decimal paidAmount,
             string rawResponse
         );
+
+        Task<List<TopupTransactionResponse>> GetTopupTransactionsByUserIdAsync(TopupRequestQuery req);
     }
 
 }

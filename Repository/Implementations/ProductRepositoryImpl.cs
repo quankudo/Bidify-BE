@@ -2,7 +2,6 @@
 using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Product;
-using bidify_be.Exceptions;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -167,5 +166,6 @@ namespace bidify_be.Repository.Implementations
             product.Status = ProductStatus.Cancelled;
             _context.Products.Update(product);
         }
+
     }
 }

@@ -69,5 +69,37 @@ namespace bidify_be.Controllers
             var result = await _productService.FilterProductsAsync(request);
             return Ok(ApiResponse<PagedResult<ProductShortResponse>>.SuccessResponse(result, "Fetched products successfully"));
         }
+
+        [HttpGet("filter-by-admin")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<ApiResponse<PagedResult<ProductShortResponse>>>> FilterForAdmin([FromQuery] ProductFilterRequest request)
+        {
+            request.IsAdmin = true;
+            var result = await _productService.FilterProductsAsync(request);
+            return Ok(ApiResponse<PagedResult<ProductShortResponse>>.SuccessResponse(result, "Fetched products successfully"));
+        }
+
+        // ------------------ APPROVE ------------------
+        [HttpPut("approve/{id:guid}")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<ApiResponse<bool>>> ApproveProduct(Guid id)
+        {
+            var result = await _productService.ApproveProductAsync(id);
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                result,
+                "Product approved successfully"));
+        }
+
+        // ------------------ REJECT ------------------
+        [HttpPut("reject")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<ApiResponse<bool>>> RejectProduct([FromBody] RejectProductRequest request)
+        {
+            var result = await _productService.RejectProductAsync(request);
+            return Ok(ApiResponse<bool>.SuccessResponse(
+                result,
+                "Product rejected successfully"));
+        }
+
     }
 }

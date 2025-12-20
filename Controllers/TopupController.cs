@@ -1,4 +1,6 @@
 ﻿using bidify_be.Domain.Contracts;
+using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Category;
 using bidify_be.DTOs.Tags;
 using bidify_be.DTOs.Topup;
 using bidify_be.Services.Interfaces;
@@ -52,5 +54,13 @@ namespace bidify_be.Controllers
             return Ok(ApiResponse<CreateTopupResult>.SuccessResponse(result, "Topup successfully"));
         }
 
+
+        [HttpGet("Topup/user")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<List<TopupTransactionResponse>>>> GetAllPagingAsync([FromQuery] TopupRequestQuery req)
+        {
+            var result = await _topupService.GetTopupTransactionsByUserIdAsync(req);
+            return Ok(ApiResponse<List<TopupTransactionResponse>>.SuccessResponse(result));
+        }
     }
 }

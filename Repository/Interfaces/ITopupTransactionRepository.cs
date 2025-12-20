@@ -1,4 +1,5 @@
 ﻿using bidify_be.Domain.Entities;
+using bidify_be.DTOs.Topup;
 
 namespace bidify_be.Repository.Interfaces
 {
@@ -8,5 +9,6 @@ namespace bidify_be.Repository.Interfaces
 
         Task AddAsync(TopupTransaction transaction);
         Task UpdateAsync(TopupTransaction transaction);
+        Task<List<TopupTransactionResponse>> GetAllByUserIdAsync(string userId, TopupRequestQuery req);
     }
 }

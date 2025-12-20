@@ -18,12 +18,13 @@ namespace bidify_be.Repository.Implementations
             await _context.AddAsync(entity);
         }
 
-        public async Task<List<TransitionPackageBidResponse>> GetByUserIdAsync(string userId)
+        public async Task<List<TransitionPackageBidResponse>> GetByUserIdAsync(string userId, int skip = 0, int take = 20)
         {
             var query = from t in _context.TransitionPackagesBids.AsNoTracking()
                         join p in _context.PackageBid.AsNoTracking()
                             on t.PackageBidId equals p.Id
                         where t.UserId == userId
+                        orderby t.CreatedAt descending 
                         select new TransitionPackageBidResponse
                         {
                             Id = t.Id,
@@ -36,7 +37,7 @@ namespace bidify_be.Repository.Implementations
                             BgColor = p.BgColor
                         };
 
-            return await query.ToListAsync();
+            return await query.Skip(skip).Take(take).ToListAsync();
         }
     }
 }

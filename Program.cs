@@ -134,6 +134,7 @@ builder.Services.AddScoped<IFileStorageService, FileStorageServiceImpl>();
 builder.Services.AddScoped<ICloudStorageService, CloudStorageServiceImpl>();
 builder.Services.AddScoped<ITopupService, TopupService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<ITransitionPackageBidService, TransitionPackageBidServiceImpl>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Adding Repositories and UnitOfWork
@@ -148,6 +149,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepositoryImpl>();
 builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
 builder.Services.AddScoped<ITopupTransactionRepository, TopupTransactionRepositoryImpl>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepositoryImpl>();
+builder.Services.AddScoped<ITransitionPackageBidRepository, TransitionPackageBidRepositoryImpl>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
