@@ -7,6 +7,9 @@ namespace bidify_be.Domain.Enums
         [Description("USER_NOT_FOUND")]
         UserNotFound,
 
+        [Description("AUCTION_NOT_FOUND")]
+        AuctionNotFound,
+
         [Description("PRODUCT_NOT_FOUND")]
         ProductNotFound,
         
@@ -60,6 +63,9 @@ namespace bidify_be.Domain.Enums
 
         [Description("INSUFFICIENT_BALANCE")]
         InsufficientBalance,
+
+        [Description("INSUFFICIENT_BID")]
+        InsufficientBid,
 
         [Description("USER_ALREADY_VERIFIED")]
         UserAlreadyVerified

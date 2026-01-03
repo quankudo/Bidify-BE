@@ -70,19 +70,26 @@ namespace bidify_be.Controllers
             return Ok(ApiResponse<PagedResult<ProductShortResponse>>.SuccessResponse(result, "Fetched products successfully"));
         }
 
+        [HttpGet("list")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<List<ProductShortResponseForList>>>> ListProductForList()
+        {
+            var result = await _productService.GetProductShortListAsync();
+            return Ok(ApiResponse<List<ProductShortResponseForList>>.SuccessResponse(result, "Fetched products successfully"));
+        }
+
         [HttpGet("filter-by-admin")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<ApiResponse<PagedResult<ProductShortResponse>>>> FilterForAdmin([FromQuery] ProductFilterRequest request)
+        public async Task<ActionResult<ApiResponse<PagedResult<ProductForTableResponse>>>> FilterForAdmin([FromQuery] ProductFilterRequest request)
         {
-            request.IsAdmin = true;
-            var result = await _productService.FilterProductsAsync(request);
-            return Ok(ApiResponse<PagedResult<ProductShortResponse>>.SuccessResponse(result, "Fetched products successfully"));
+            var result = await _productService.FilterProductsForAdminAsync(request);
+            return Ok(ApiResponse<PagedResult<ProductForTableResponse>>.SuccessResponse(result, "Fetched products successfully"));
         }
 
         // ------------------ APPROVE ------------------
-        [HttpPut("approve/{id:guid}")]
+        [HttpPut("{id:guid}/approve")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<ApiResponse<bool>>> ApproveProduct(Guid id)
+        public async Task<ActionResult<ApiResponse<bool>>> ApproveProduct([FromRoute] Guid id)
         {
             var result = await _productService.ApproveProductAsync(id);
             return Ok(ApiResponse<bool>.SuccessResponse(
@@ -90,16 +97,26 @@ namespace bidify_be.Controllers
                 "Product approved successfully"));
         }
 
+
         // ------------------ REJECT ------------------
-        [HttpPut("reject")]
+        [HttpPut("{id:guid}/reject")]
         [Authorize(Roles = "admin")]
-        public async Task<ActionResult<ApiResponse<bool>>> RejectProduct([FromBody] RejectProductRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> RejectProduct(
+            [FromRoute] Guid id,
+            [FromBody] RejectProductReasonRequest request)
         {
-            var result = await _productService.RejectProductAsync(request);
+            var result = await _productService.RejectProductAsync(
+                new RejectProductRequest
+                {
+                    Id = id,
+                    Reason = request.Reason
+                });
+
             return Ok(ApiResponse<bool>.SuccessResponse(
                 result,
                 "Product rejected successfully"));
         }
+
 
     }
 }

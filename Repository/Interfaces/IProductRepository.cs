@@ -12,6 +12,8 @@ namespace bidify_be.Repository.Interfaces
         // Get by id (kèm include cho detail)
         Task<Product?> GetProductByUser(string userId, Guid id);
 
+        Task<List<ProductShortResponseForList>> GetProductShortListAsync(string userId);
+
         Task<Product?> GetProductByAdmin(Guid id);
 
 
@@ -24,6 +26,8 @@ namespace bidify_be.Repository.Interfaces
         void Update(Product product);
 
         Task<PagedResult<ProductShortResponse>> FilterProductsAsync(ProductFilterRequest request);
+        Task<PagedResult<ProductForTableResponse>> FilterProductsForAdminAsync(ProductFilterRequest request);
+        
 
         Task<ProductResponse?> GetProductDetailAsync(Guid id);
 

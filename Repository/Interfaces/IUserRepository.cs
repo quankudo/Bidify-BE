@@ -1,0 +1,10 @@
+﻿using bidify_be.Domain.Entities;
+
+namespace bidify_be.Repository.Interfaces
+{
+    public interface IUserRepository
+    {
+        Task<ApplicationUser?> GetByIdWithLockAsync(string userId);
+        void Update(ApplicationUser user);
+    }
+}

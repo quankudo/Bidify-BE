@@ -16,9 +16,6 @@ namespace bidify_be.DTOs.Product
         public ProductStatus? Status { get; set; }
         public ProductCondition? Condition { get; set; }
 
-        // Role filter
-        public bool IsAdmin { get; set; } = false;
-
         // For normal user (filter theo user)
         public string? UserId { get; set; }
     }

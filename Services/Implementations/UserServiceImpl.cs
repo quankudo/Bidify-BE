@@ -156,6 +156,7 @@ namespace bidify_be.Services.Implementations
             }
 
             var userResponse = _mapper.Map<ApplicationUser, UserResponse>(user);
+            userResponse.IsVerifyEmail = user.EmailConfirmed;
             userResponse.Role = role;
             var response = new TokenWithUserResponse
             {

@@ -18,6 +18,13 @@ namespace bidify_be.Exceptions
         }
     }
 
+
+    public class InsufficientBidException : AppException
+    {
+        public InsufficientBidException()
+            : base("Not enough bids", 400, ErrorCode.InsufficientBid) { }
+    }
+
     public class AddressLimitExceededException : AppException
     {
         public AddressLimitExceededException(string message, ErrorCode errorCode = ErrorCode.AddressLimitExceeded)
@@ -98,6 +105,12 @@ namespace bidify_be.Exceptions
     public class AddressNotFoundException : AppException
     {
         public AddressNotFoundException(string message, ErrorCode errorCode = ErrorCode.AddressNotFound)
+            : base(message, 404, errorCode) { }
+    }
+
+    public class AuctionNotFoundException : AppException
+    {
+        public AuctionNotFoundException(string message, ErrorCode errorCode = ErrorCode.AddressNotFound)
             : base(message, 404, errorCode) { }
     }
 

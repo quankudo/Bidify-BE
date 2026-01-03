@@ -16,8 +16,17 @@ namespace bidify_be.DTOs.Users
         public decimal Balance { get; set; }
         public decimal RateStar { get; set; }
         public bool Status { get; set; }
+        public bool IsVerifyEmail { get; set; }
         public DateTime? Dob { get; set; }
         public DateTime CreateAt { get; set; }
         public DateTime UpdateAt { get; set; }
+    }
+
+    public class UserShortResponse
+    {
+        public string Id { get; set; }
+        public string UserName { get; set; }
+        public string? Avatar { get; set; }
+        public decimal RateStar { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Product;
+using bidify_be.DTOs.Users;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -41,11 +42,8 @@ namespace bidify_be.Repository.Implementations
         {
             var query = _context.Products.AsNoTracking().AsQueryable();
 
-            // ===================== USER FILTER =======================
-            if (!request.IsAdmin && !string.IsNullOrEmpty(request.UserId))
-            {
-                query = query.Where(x => x.UserId == request.UserId);
-            }
+            query = query.Where(x => x.UserId == request.UserId);
+            
 
             // ===================== SEARCH ============================
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -98,6 +96,76 @@ namespace bidify_be.Repository.Implementations
                 request.PageSize
             );
         }
+
+        public async Task<PagedResult<ProductForTableResponse>> FilterProductsForAdminAsync(ProductFilterRequest request)
+        {
+            var query =
+                from p in _context.Products.AsNoTracking()
+                join u in _context.Users.AsNoTracking()
+                    on p.UserId equals u.Id
+                select new { p, u };
+
+            // ===================== SEARCH ============================
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var s = request.Search.Trim().ToLower();
+
+                query = query.Where(x =>
+                    x.p.Name.ToLower().Contains(s) ||
+                    (x.p.Brand != null && x.p.Brand.ToLower().Contains(s)) ||
+                    x.p.Id.ToString().Contains(s) ||
+                    x.u.Email!.ToLower().Contains(s) ||
+                    x.u.UserName!.ToLower().Contains(s)
+                );
+            }
+
+            // ===================== FILTER ============================
+            if (request.CategoryId.HasValue)
+                query = query.Where(x => x.p.CategoryId == request.CategoryId);
+
+            if (request.Status.HasValue)
+                query = query.Where(x => x.p.Status == request.Status);
+
+            if (request.Condition.HasValue)
+                query = query.Where(x => x.p.Condition == request.Condition);
+
+            // ===================== TOTAL COUNT ======================
+            var totalItems = await query.CountAsync();
+
+            // ===================== PAGING + PROJECTION ==============
+            var items = await query
+                .OrderByDescending(x => x.p.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(x => new ProductForTableResponse
+                {
+                    Id = x.p.Id,
+                    Name = x.p.Name,
+                    Description = x.p.Description,
+                    CategoryId = x.p.CategoryId,
+                    Brand = x.p.Brand,
+                    Status = x.p.Status,
+                    Condition = x.p.Condition,
+                    Thumbnail = x.p.Thumbnail,
+                    Note = x.p.Note,
+                    User = new UserShortResponse
+                    {
+                        Id = x.u.Id,
+                        UserName = x.u.UserName,
+                        Avatar = x.u.Avatar,
+                        RateStar = x.u.RateStar
+                    }
+                })
+                .ToListAsync();
+
+            return new PagedResult<ProductForTableResponse>(
+                items,
+                totalItems,
+                request.PageNumber,
+                request.PageSize
+            );
+        }
+
 
         public async Task<ProductResponse?> GetProductDetailAsync(Guid id)
         {
@@ -167,5 +235,16 @@ namespace bidify_be.Repository.Implementations
             _context.Products.Update(product);
         }
 
+        public async Task<List<ProductShortResponseForList>> GetProductShortListAsync(string userId)
+        {
+            return await _context.Products.AsNoTracking()
+                .Where(x=>x.UserId == userId && x.Status==ProductStatus.Active)
+                .Select(x=> new ProductShortResponseForList
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Thumbnail = x.Thumbnail,
+            }).ToListAsync();
+        }
     }
 }

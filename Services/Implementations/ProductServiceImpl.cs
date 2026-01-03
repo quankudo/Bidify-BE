@@ -361,9 +361,8 @@ namespace bidify_be.Services.Implementations
 
         public async Task<PagedResult<ProductShortResponse>> FilterProductsAsync(ProductFilterRequest request)
         {
-            _logger.LogInformation("Filtering products for UserId={UserId}, Admin={IsAdmin}",
-                request.UserId, request.IsAdmin);
-            request.IsAdmin = false;
+            _logger.LogInformation("Filtering products for UserId={UserId}",
+                request.UserId);
             var userId = _currentUserService.GetUserId();
             request.UserId = userId;
 
@@ -373,6 +372,27 @@ namespace bidify_be.Services.Implementations
 
             return result;
         }
+
+        public async Task<PagedResult<ProductForTableResponse>> FilterProductsForAdminAsync(ProductFilterRequest request)
+        {
+            _logger.LogInformation(
+                "Admin filtering products. Page={PageNumber}, Size={PageSize}, Status={Status}, Category={CategoryId}",
+                request.PageNumber,
+                request.PageSize,
+                request.Status,
+                request.CategoryId);
+
+            var result = await _unitOfWork.ProductRepository
+                .FilterProductsForAdminAsync(request);
+
+            _logger.LogInformation(
+                "Admin filter returned {Count} items (Total={TotalItems})",
+                result.Items.Count(),
+                result.TotalItems);
+
+            return result;
+        }
+
 
         public async Task<ProductResponse> GetProductDetailAsync(Guid id)
         {
@@ -507,5 +527,12 @@ namespace bidify_be.Services.Implementations
             return true;
         }
 
+        public async Task<List<ProductShortResponseForList>> GetProductShortListAsync()
+        {
+            var userId = _currentUserService.GetUserId();
+            EnsureAuthenticatedUser(userId);
+
+            return await _unitOfWork.ProductRepository.GetProductShortListAsync(userId);
+        }
     }
 }

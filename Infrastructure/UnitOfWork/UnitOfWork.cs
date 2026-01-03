@@ -7,6 +7,8 @@ namespace bidify_be.Infrastructure.UnitOfWork
     public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _context;
+
+        public IUserRepository UserRepository { get; set; }
         public ICategoryRepository Categories { get; }
         public IPackageBidRepository PackageBids { get; }
 
@@ -20,9 +22,11 @@ namespace bidify_be.Infrastructure.UnitOfWork
         public IWalletTransactionRepository WalletTransactionRepository { get; }
         public ITopupTransactionRepository TopupTransactionRepository { get; }
         public ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
+        public IAuctionRepository AuctionRepository { get; }
 
         public UnitOfWork(
             ApplicationDbContext context, 
+            IUserRepository userRepository,
             ICategoryRepository categories, 
             IPackageBidRepository packageBids, 
             ITagRepository tagRepository, 
@@ -34,9 +38,11 @@ namespace bidify_be.Infrastructure.UnitOfWork
             IFileStorageRepository fileStorageRepository,
             ITopupTransactionRepository topupTransactionRepository,
             IWalletTransactionRepository walletTransactionRepository,
-            ITransitionPackageBidRepository transitionPackageBidRepository)
+            ITransitionPackageBidRepository transitionPackageBidRepository,
+            IAuctionRepository auctionRepository)
         {
             _context = context;
+            UserRepository = userRepository;
             Categories = categories;
             PackageBids = packageBids;
             TagRepository = tagRepository;
@@ -49,6 +55,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
             TopupTransactionRepository = topupTransactionRepository;
             WalletTransactionRepository = walletTransactionRepository;
             TransitionPackageBidRepository = transitionPackageBidRepository;
+            AuctionRepository = auctionRepository;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

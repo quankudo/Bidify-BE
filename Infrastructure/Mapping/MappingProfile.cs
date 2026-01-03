@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Address;
+using bidify_be.DTOs.Auction;
 using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Category;
 using bidify_be.DTOs.Gift;
@@ -104,6 +105,30 @@ namespace bidify_be.Infrastructure.Mapping
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore())
                 .ForMember(dest => dest.Product, opt => opt.Ignore())
                 .ForMember(dest => dest.Tag, opt => opt.Ignore());
+
+            CreateMap<AddAuctionRequest, Auction>()
+            // map field đơn giản
+            .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
+            .ForMember(dest => dest.StartAt, opt => opt.MapFrom(src => src.StartAt))
+            .ForMember(dest => dest.EndAt, opt => opt.MapFrom(src => src.EndAt))
+            .ForMember(dest => dest.StepPrice, opt => opt.MapFrom(src => src.StepPrice))
+            .ForMember(dest => dest.StartPrice, opt => opt.MapFrom(src => src.StartPrice))
+
+            // field hệ thống
+            .ForMember(dest => dest.Status, opt => opt.Ignore())
+            .ForMember(dest => dest.UserId, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.WinnerId, opt => opt.Ignore())
+
+            // map AuctionTags
+            .ForMember(dest => dest.AuctionTags,
+                opt => opt.MapFrom(src =>
+                    src.Tags.Select(t => new AuctionTag
+                    {
+                        TagId = t.TagId
+                    })
+                ));
         }
     }
 }

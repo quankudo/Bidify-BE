@@ -11,5 +11,6 @@ namespace bidify_be.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<ProductTag> ProductTags { get; set; } = new List<ProductTag>();
+        public ICollection<AuctionTag> AuctionTags { get; set; } = new List<AuctionTag>();
     }
 }

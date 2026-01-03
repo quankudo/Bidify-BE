@@ -9,6 +9,10 @@ namespace bidify_be.Services.Interfaces
         Task<ProductResponse> AddProductAsync(AddProductRequest request);
         Task<ProductResponse> GetProductDetailAsync(Guid id);
 
+        Task<List<ProductShortResponseForList>> GetProductShortListAsync();
+
+        Task<PagedResult<ProductForTableResponse>> FilterProductsForAdminAsync(ProductFilterRequest request);
+
         // Delete
         Task<bool> DeleteProductAsyncByUser(Guid id);
         Task<bool> DeleteProductAsyncByAdmin(Guid id);

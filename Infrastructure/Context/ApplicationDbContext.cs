@@ -22,6 +22,8 @@ namespace bidify_be.Infrastructure.Context
         public DbSet<TopupTransaction> TopupTransactions { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
         public DbSet<TransitionPackageBid> TransitionPackagesBids { get; set; }
+        public DbSet<Auction> Auctions { get; set; }
+        public DbSet<AuctionTag> AuctionTags { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

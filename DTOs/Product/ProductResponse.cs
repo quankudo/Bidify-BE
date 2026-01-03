@@ -1,5 +1,5 @@
-﻿using bidify_be.Domain.Entities;
-using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Enums;
+using bidify_be.DTOs.Users;
 
 namespace bidify_be.DTOs.Product
 {
@@ -22,7 +22,7 @@ namespace bidify_be.DTOs.Product
         public ICollection<ProductTagResponse> ProductTags { get; set; } = new List<ProductTagResponse>();
     }
 
-    public class ProductShortResponse
+    public class ProductShortResponse //hiển thị ở trang quản lý sản phẩm của mỗi user
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -33,6 +33,27 @@ namespace bidify_be.DTOs.Product
         public ProductCondition Condition { get; set; }
         public string Thumbnail { get; set; } = string.Empty;
         public string? Note { get; set; }
+    }
+
+    public class ProductShortResponseForList //hiển thị ở trang quản lý sản phẩm của mỗi user
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Thumbnail { get; set; } = string.Empty;
+    }
+
+    public class ProductForTableResponse //hiển thị ở table trang admin
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public Guid CategoryId { get; set; }
+        public string? Brand { get; set; }
+        public ProductStatus Status { get; set; }
+        public ProductCondition Condition { get; set; }
+        public string Thumbnail { get; set; } = string.Empty;
+        public string? Note { get; set; }
+        public UserShortResponse User {  get; set; }
     }
 
     public class ProductImageResponse

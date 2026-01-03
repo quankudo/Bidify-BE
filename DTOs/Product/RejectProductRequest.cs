@@ -5,4 +5,9 @@
         public Guid Id { get; set; }
         public string Reason { get; set; }
     }
+
+    public class RejectProductReasonRequest
+    {
+        public string Reason { get; set; }
+    }
 }

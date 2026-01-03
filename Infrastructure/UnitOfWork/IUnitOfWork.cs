@@ -5,6 +5,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
 {
     public interface IUnitOfWork
     {
+        IUserRepository UserRepository { get; }
         ICategoryRepository Categories { get; }
         IPackageBidRepository PackageBids { get; }
         ITagRepository TagRepository { get; }
@@ -17,6 +18,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
         ITopupTransactionRepository TopupTransactionRepository { get; }
         IWalletTransactionRepository WalletTransactionRepository { get; }
         ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
+        IAuctionRepository AuctionRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

@@ -1,6 +1,7 @@
 ﻿using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.DTOs.Address;
+using bidify_be.DTOs.Auction;
 using bidify_be.DTOs.Auth;
 using bidify_be.DTOs.Category;
 using bidify_be.DTOs.Gift;
@@ -23,6 +24,7 @@ using bidify_be.Services;
 using bidify_be.Services.Implementations;
 using bidify_be.Services.Interfaces;
 using bidify_be.Validators.Address;
+using bidify_be.Validators.Auction;
 using bidify_be.Validators.Auth;
 using bidify_be.Validators.Category;
 using bidify_be.Validators.Gift;
@@ -116,6 +118,9 @@ builder.Services.AddScoped<IValidator<UpdateVoucherRequest>, UpdateVoucherReques
 builder.Services.AddScoped<IValidator<AddProductRequest>, AddProductRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateProductRequest>, UpdateProductRequestValidator>();
 
+builder.Services.AddScoped<IValidator<AddAuctionRequest>, AddAuctionRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateAuctionRequest>, UpdateAuctionRequestValidator>();
+
 builder.Services.AddScoped<IValidator<TransitionPackageBidRequest>, TransitionPackageBidRequestValidator>();
 
 // Adding Services  
@@ -135,9 +140,11 @@ builder.Services.AddScoped<ICloudStorageService, CloudStorageServiceImpl>();
 builder.Services.AddScoped<ITopupService, TopupService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransitionPackageBidService, TransitionPackageBidServiceImpl>();
+builder.Services.AddScoped<IAuctionService, AuctionServiceImpl>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Adding Repositories and UnitOfWork
+builder.Services.AddScoped<IUserRepository, UserRepositoryImpl>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepositoryImpl>();
 builder.Services.AddScoped<IPackageBidRepository, PackageBidRepositoryImpl>();
 builder.Services.AddScoped<ITagRepository, TagRepositoryImpl>();
@@ -150,6 +157,7 @@ builder.Services.AddScoped<IFileStorageRepository, FileStorageRepository>();
 builder.Services.AddScoped<ITopupTransactionRepository, TopupTransactionRepositoryImpl>();
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepositoryImpl>();
 builder.Services.AddScoped<ITransitionPackageBidRepository, TransitionPackageBidRepositoryImpl>();
+builder.Services.AddScoped<IAuctionRepository, AuctionRepositoryImpl>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
