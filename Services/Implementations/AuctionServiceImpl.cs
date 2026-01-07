@@ -8,12 +8,12 @@ using bidify_be.DTOs.Product;
 using bidify_be.DTOs.Users;
 using bidify_be.Exceptions;
 using bidify_be.Helpers;
+using bidify_be.Hubs;
 using bidify_be.Infrastructure.UnitOfWork;
-using bidify_be.Repository.Interfaces;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
 
 namespace bidify_be.Services.Implementations
@@ -27,6 +27,8 @@ namespace bidify_be.Services.Implementations
         private readonly ICurrentUserService _currentUserService;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<AppHub> _hub;
 
         public AuctionServiceImpl(IUnitOfWork unitOfWork,
             ILogger<AuctionServiceImpl> logger,
@@ -34,7 +36,9 @@ namespace bidify_be.Services.Implementations
             IValidator<UpdateAuctionRequest> updateValidator,
             ICurrentUserService currentUserService,
             IMapper mapper,
-            UserManager<ApplicationUser> userManager
+            UserManager<ApplicationUser> userManager,
+            INotificationService notificationService,
+            IHubContext<AppHub> hubContext
             )
         {
             _unitOfWork = unitOfWork;
@@ -44,6 +48,8 @@ namespace bidify_be.Services.Implementations
             _updateValidator = updateValidator;
             _currentUserService = currentUserService;
             _userManager = userManager;
+            _notificationService = notificationService;
+            _hub = hubContext;
         }
 
         private async Task ValidateAsync<T>(T request, IValidator<T> validator)
@@ -77,36 +83,82 @@ namespace bidify_be.Services.Implementations
             // 1. Auth - Admin only
             EnsureAdmin();
 
-            // 2. Get auction
-            var auction = await _unitOfWork.AuctionRepository.GetByIdAsync(auctionId);
-            if (auction == null)
-            {
-                _logger.LogWarning("Auction not found: {AuctionId}", auctionId);
-                throw new KeyNotFoundException("Auction not found.");
-            }
+            using var tx = await _unitOfWork.BeginTransactionAsync();
 
-            // 3. Business rule
-            if (auction.Status != AuctionStatus.Pending)
+            try
             {
-                _logger.LogWarning(
-                    "Cannot approve auction {AuctionId} with status {Status}",
-                    auctionId, auction.Status
+                // 2. Get auction
+                var auction = await _unitOfWork.AuctionRepository.GetByIdAsync(auctionId);
+                if (auction == null)
+                {
+                    _logger.LogWarning("Auction not found: {AuctionId}", auctionId);
+                    throw new KeyNotFoundException("Auction not found.");
+                }
+
+                // 3. Business rule
+                if (auction.Status != AuctionStatus.Pending)
+                {
+                    _logger.LogWarning(
+                        "Cannot approve auction {AuctionId} with status {Status}",
+                        auctionId, auction.Status
+                    );
+                    throw new InvalidOperationException("Only pending auctions can be approved.");
+                }
+
+                // 4. Update auction
+                auction.Status = AuctionStatus.Approved;
+                auction.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.AuctionRepository.Update(auction);
+
+                // 5. Notification content
+                var title = "Auction Approved";
+                var message =
+                    $"Your auction for product #{auction.ProductId} has been approved " +
+                    $"and is now ready for bidding.";
+
+                var userIds = new[] { auction.UserId };
+
+                // 6. Send notification (CHUNG TRANSACTION)
+                var notifications = await _notificationService.SendAsync(
+                    NotificationType.AUCTION_APPROVED,
+                    title,
+                    message,
+                    userIds,
+                    auction.Id
                 );
-                throw new InvalidOperationException("Only pending auctions can be approved.");
+
+                // 7. Commit DB
+                await _unitOfWork.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // 8. SignalR notify (SAU COMMIT)
+                await _hub.Clients.User(auction.UserId)
+                    .SendAsync("ReceiveNotification", new NotificationDto
+                    {
+                        Id = notifications?.FirstOrDefault()?.Id,
+                        NotificationType = NotificationType.AUCTION_APPROVED,
+                        Title = title,
+                        Message = message,
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        IsDeleted = false,
+                        Mode = NotificationMode.Personal
+                    });
+
+                _logger.LogInformation(
+                    "Auction approved successfully: {AuctionId}", auctionId);
+
+                return true;
             }
-
-            // 4. Update
-            auction.Status = AuctionStatus.Approved;
-            auction.UpdatedAt = DateTime.UtcNow;
-
-            // 5. Save
-            _unitOfWork.AuctionRepository.Update(auction);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Auction approved successfully: {AuctionId}", auctionId);
-
-            return true;
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error while approving auction: {AuctionId}", auctionId);
+                throw;
+            }
         }
+
 
 
         public async Task<bool> CancelAuctionByUserAsync(Guid auctionId)
@@ -179,6 +231,13 @@ namespace bidify_be.Services.Implementations
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found", userId);
+                throw new UnauthorizedAccessException("User not found.");
+            }
+
             // 2. Validate
             await ValidateAsync(request, _addValidator);
 
@@ -214,6 +273,25 @@ namespace bidify_be.Services.Implementations
                 auction.Id,
                 auction.Status
             );
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminIds = admins.Select(a => a.Id);
+            var title = "New Auction Created";
+            var productName = auction.Product?.Name ?? $"Product #{auction.ProductId}";
+
+            var message = $"Auction for {productName} has been created by {user.UserName}.";
+            await _notificationService.SendWithSeparateTransactionAsync(NotificationType.AUCTION_CREATED, title, message, adminIds, auction.Id);
+
+            await _hub.Clients.Group("Admins").SendAsync("ReceiveNotification", new NotificationDto
+            {
+                NotificationType = NotificationType.AUCTION_CREATED,
+                Title = title,
+                Message = message,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                IsRead = false,
+                Mode = NotificationMode.Broadcast,
+            });
 
             return auction.Id;
         }
@@ -459,51 +537,99 @@ namespace bidify_be.Services.Implementations
 
 
 
-        public async Task<bool> RejectAuctionAsync(RejectAuctionRequest request, Guid AuctionId)
+        public async Task<bool> RejectAuctionAsync(
+            RejectAuctionRequest request,
+            Guid auctionId)
         {
             _logger.LogInformation(
                 "Admin rejecting auction. AuctionId: {AuctionId}, Reason: {Reason}",
-                AuctionId,
+                auctionId,
                 request.Reason
             );
 
-            // 1. Auth (Admin)
+            // 1. Auth - Admin only
             EnsureAdmin();
 
-            // 3. Get auction
-            var auction = await _unitOfWork.AuctionRepository.GetByIdAsync(AuctionId);
-            if (auction == null)
-            {
-                _logger.LogWarning("Auction not found. AuctionId: {AuctionId}", AuctionId);
-                throw new KeyNotFoundException("Auction not found.");
-            }
+            using var tx = await _unitOfWork.BeginTransactionAsync();
 
-            // 4. Business rules
-            if (auction.Status != AuctionStatus.Pending)
+            try
             {
-                _logger.LogWarning(
-                    "Cannot reject auction {AuctionId} with status {Status}",
-                    AuctionId,
-                    auction.Status
+                // 2. Get auction
+                var auction = await _unitOfWork.AuctionRepository.GetByIdAsync(auctionId);
+                if (auction == null)
+                {
+                    _logger.LogWarning("Auction not found: {AuctionId}", auctionId);
+                    throw new KeyNotFoundException("Auction not found.");
+                }
+
+                // 3. Business rule
+                if (auction.Status != AuctionStatus.Pending)
+                {
+                    _logger.LogWarning(
+                        "Cannot reject auction {AuctionId} with status {Status}",
+                        auctionId,
+                        auction.Status
+                    );
+                    throw new InvalidOperationException("Only pending auctions can be rejected.");
+                }
+
+                // 4. Update auction
+                auction.Status = AuctionStatus.Cancelled; 
+                auction.Note = request.Reason;
+                auction.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.AuctionRepository.Update(auction);
+
+                // 5. Notification content
+                var title = "Auction Rejected";
+                var message =
+                    $"Your auction for product #{auction.ProductId} has been rejected. " +
+                    $"Reason: {request.Reason}";
+
+                var userIds = new[] { auction.UserId };
+
+                // 6. Send notification (CHUNG TRANSACTION)
+                var notifications = await _notificationService.SendAsync(
+                    NotificationType.AUCTION_REJECTED,
+                    title,
+                    message,
+                    userIds,
+                    auction.Id
                 );
-                throw new InvalidOperationException("Only pending auctions can be rejected.");
+
+                // 7. Commit DB
+                await _unitOfWork.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // 8. SignalR notify (SAU COMMIT)
+                await _hub.Clients.User(auction.UserId)
+                    .SendAsync("ReceiveNotification", new NotificationDto
+                    {
+                        Id = notifications?.FirstOrDefault()?.Id,
+                        NotificationType = NotificationType.AUCTION_REJECTED,
+                        Title = title,
+                        Message = message,
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        IsDeleted = false,
+                        Mode = NotificationMode.Personal
+                    });
+
+                _logger.LogInformation(
+                    "Auction rejected successfully: {AuctionId}",
+                    auctionId
+                );
+
+                return true;
             }
-
-            // 5. Update
-            auction.Status = AuctionStatus.Cancelled; // hoặc Rejected
-            auction.Note = request.Reason;
-            auction.UpdatedAt = DateTime.UtcNow;
-
-            _unitOfWork.AuctionRepository.Update(auction);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Auction rejected successfully. AuctionId: {AuctionId}",
-                AuctionId
-            );
-
-            return true;
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error while rejecting auction: {AuctionId}", auctionId);
+                throw;
+            }
         }
+
 
         private void UpdateAuctionTags(Auction auction, UpdateAuctionRequest request)
         {
@@ -551,16 +677,24 @@ namespace bidify_be.Services.Implementations
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found", userId);
+                throw new UnauthorizedAccessException("User not found.");
+            }
+
             // 2. Validate
             await ValidateAsync(request, _updateValidator);
 
             using var tx = await _unitOfWork.BeginTransactionAsync();
 
+            // 3. Get auction with tags (FOR UPDATE)
+            var auction = await _unitOfWork.AuctionRepository
+                .GetByIdIncludeTagsAsync(auctionId);
+
             try
             {
-                // 3. Get auction with tags (FOR UPDATE)
-                var auction = await _unitOfWork.AuctionRepository
-                    .GetByIdIncludeTagsAsync(auctionId);
 
                 if (auction == null)
                     throw new KeyNotFoundException("Auction not found.");
@@ -606,8 +740,6 @@ namespace bidify_be.Services.Implementations
                     "Auction updated successfully. AuctionId={AuctionId}",
                     auctionId
                 );
-
-                return true;
             }
             catch (Exception ex)
             {
@@ -615,6 +747,30 @@ namespace bidify_be.Services.Implementations
                 _logger.LogError(ex, "Error while updating auction. AuctionId={AuctionId}", auctionId);
                 throw;
             }
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminIds = admins.Select(a => a.Id);
+            var productName = auction.Product?.Name ?? $"Product #{auction.ProductId}";
+
+            var title = auction.Status == AuctionStatus.Pending
+                ? "Auction Updated (Pending Approval)"
+                : "Auction Updated";
+
+            var message = $"Auction for {productName} has been updated by {user.UserName}.";
+            await _notificationService.SendWithSeparateTransactionAsync(NotificationType.AUCTION_UPDATED, title, message, adminIds, auction.Id);
+
+            await _hub.Clients.Group("Admins").SendAsync("ReceiveNotification", new NotificationDto
+            {
+                NotificationType = NotificationType.AUCTION_UPDATED,
+                Title = title,
+                Message = message,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                IsRead = false,
+                Mode = NotificationMode.Broadcast,
+            });
+
+            return true;
         }
 
         public async Task<AuctionShortResponseForUpdate> GetAuctionForUpdateAsync(Guid auctionId)

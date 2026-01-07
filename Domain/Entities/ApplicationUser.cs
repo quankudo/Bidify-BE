@@ -26,5 +26,6 @@ namespace bidify_be.Domain.Entities
         public DateTime UpdateAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
+        public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
     }
 }

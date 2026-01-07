@@ -6,5 +6,6 @@ namespace bidify_be.Repository.Interfaces
     {
         Task<ApplicationUser?> GetByIdWithLockAsync(string userId);
         void Update(ApplicationUser user);
+        Task<ApplicationUser?> GetByIdAsync(string userId);
     }
 }

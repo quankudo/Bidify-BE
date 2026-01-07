@@ -14,6 +14,7 @@ using bidify_be.DTOs.Users;
 using bidify_be.DTOs.Voucher;
 using bidify_be.Exceptions;
 using bidify_be.Extensions;
+using bidify_be.Hubs;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Infrastructure.Mapping;
 using bidify_be.Infrastructure.Seed;
@@ -89,6 +90,8 @@ builder.Services.AddSingleton(sp =>
     return new Cloudinary(account);
 });
 
+builder.Services.AddSignalR();
+
 // Adding Validators
 builder.Services.AddScoped<IValidator<UserRegisterRequest>, UserRegisterRequestValidator>();
 builder.Services.AddScoped<IValidator<UserLoginRequest>, UserLoginRequestValidator>();
@@ -141,6 +144,7 @@ builder.Services.AddScoped<ITopupService, TopupService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransitionPackageBidService, TransitionPackageBidServiceImpl>();
 builder.Services.AddScoped<IAuctionService, AuctionServiceImpl>();
+builder.Services.AddScoped<INotificationService, NotificationServiceImpl>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // Adding Repositories and UnitOfWork
@@ -158,6 +162,7 @@ builder.Services.AddScoped<ITopupTransactionRepository, TopupTransactionReposito
 builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionRepositoryImpl>();
 builder.Services.AddScoped<ITransitionPackageBidRepository, TransitionPackageBidRepositoryImpl>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepositoryImpl>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepositoryImpl>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -194,5 +199,7 @@ app.UseExceptionHandler();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<AppHub>("/hubs/app");
 
 app.Run();

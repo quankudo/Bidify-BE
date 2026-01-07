@@ -12,6 +12,14 @@ namespace bidify_be.Repository.Implementations
         {
             _context = context;
         }
+
+        public async Task<ApplicationUser?> GetByIdAsync(string userId)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
         public async Task<ApplicationUser?> GetByIdWithLockAsync(string userId)
         {
             return await _context.Users

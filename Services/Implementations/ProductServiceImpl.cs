@@ -5,9 +5,12 @@ using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Product;
 using bidify_be.Exceptions;
 using bidify_be.Helpers;
+using bidify_be.Hubs;
 using bidify_be.Infrastructure.UnitOfWork;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
 
@@ -22,6 +25,9 @@ namespace bidify_be.Services.Implementations
         private readonly IValidator<UpdateProductRequest> _validatorUpdate;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileStorageService _fileStorageService;
+        public readonly INotificationService _notificationService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHubContext<AppHub> _hub;
 
         public ProductServiceImpl(
             IUnitOfWork unitOfWork, 
@@ -30,7 +36,10 @@ namespace bidify_be.Services.Implementations
             IValidator<AddProductRequest> validatorAdd,
             IValidator<UpdateProductRequest> validatorUpdate,
             ICurrentUserService currentUserService,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            INotificationService notificationService,
+            UserManager<ApplicationUser> userManager,
+            IHubContext<AppHub> hubContext)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -39,6 +48,9 @@ namespace bidify_be.Services.Implementations
             _validatorUpdate = validatorUpdate;
             _currentUserService = currentUserService;
             _fileStorageService = fileStorageService;
+            _notificationService = notificationService;
+            _userManager = userManager;
+            _hub = hubContext;
         }
 
         private void EnsureAuthenticatedUser(string? userId)
@@ -72,6 +84,13 @@ namespace bidify_be.Services.Implementations
             // 1. Auth
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if(user == null)
+            {
+                _logger.LogWarning("User {UserId} not found", userId);
+                throw new UnauthorizedAccessException("User not found.");
+            }
 
             // 2. Validate
             await ValidateAsync(request, _validatorAdd);
@@ -120,6 +139,23 @@ namespace bidify_be.Services.Implementations
 
             _logger.LogInformation("Product created successfully with Id: {Id}", product.Id);
 
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminIds = admins.Select(a => a.Id);
+            var title = "New Product Created";
+            var message = $"Product '{product.Name}' has been created by {user.UserName}.";
+            await _notificationService.SendWithSeparateTransactionAsync(NotificationType.PRODUCT_CREATED, title, message, adminIds, product.Id);
+
+            await _hub.Clients.Group("Admins").SendAsync("ReceiveNotification", new NotificationDto
+            {
+                NotificationType = NotificationType.PRODUCT_CREATED,
+                Title = title,
+                Message = message,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                IsRead = false,
+                Mode = NotificationMode.Broadcast,
+            });
+
             return _mapper.Map<ProductResponse>(product);
         }
 
@@ -151,6 +187,13 @@ namespace bidify_be.Services.Implementations
 
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found", userId);
+                throw new UnauthorizedAccessException("User not found.");
+            }
 
             await ValidateAsync(request, _validatorUpdate);
 
@@ -242,6 +285,24 @@ namespace bidify_be.Services.Implementations
             }
 
             _logger.LogInformation("Updated Product {Id} successfully", id);
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var adminIds = admins.Select(a => a.Id);
+            var title = "Product Updated";
+            var message = $"Product '{product.Name}' has been updated by {user.UserName}.";
+            await _notificationService.SendWithSeparateTransactionAsync(NotificationType.PRODUCT_UPDATED, title, message, adminIds, product.Id);
+
+            await _hub.Clients.Group("Admins").SendAsync("ReceiveNotification", new NotificationDto
+            {
+                NotificationType = NotificationType.PRODUCT_UPDATED,
+                Title = title,
+                Message = message,
+                CreatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                IsRead = false,
+                Mode = NotificationMode.Broadcast,
+            });
+
             return _mapper.Map<ProductResponse>(product);
         }
 
@@ -448,39 +509,73 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Approving product {ProductId}", id);
 
-            var product = await _unitOfWork.ProductRepository.GetProductByAdmin(id);
-            if (product == null)
+            using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            try
             {
-                _logger.LogWarning("Product {ProductId} not found for approval", id);
-                throw new ProductNotFoundException("Product not found");
-            }
+                var product = await _unitOfWork.ProductRepository.GetProductByAdmin(id);
+                if (product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found for approval", id);
+                    throw new ProductNotFoundException("Product not found");
+                }
 
-            if (product.Status != ProductStatus.Pending)
-            {
-                _logger.LogWarning(
-                    "Invalid status transition for product {ProductId}. Current: {Status}",
-                    id, product.Status);
+                if (product.Status != ProductStatus.Pending)
+                {
+                    _logger.LogWarning(
+                        "Invalid status transition for product {ProductId}. Current: {Status}",
+                        id, product.Status);
 
-                throw new InvalidProductStateException("Invalid product status");
-            }
+                    throw new InvalidProductStateException("Invalid product status");
+                }
 
+                // Update status
+                product.Status = ProductStatus.Active;
+                product.UpdatedAt = DateTime.UtcNow;
 
-            if (product.Status == ProductStatus.Active)
-            {
+                _unitOfWork.ProductRepository.Update(product);
+
+                // Notification content
+                var title = "Product Approved";
+                var message = $"Your product '{product.Name}' has been approved and is now active.";
+
+                // Người nhận: owner product
+                var userIds = new[] { product.UserId };
+
+                var notifications = await _notificationService.SendAsync(
+                    NotificationType.PRODUCT_APPROVED,
+                    title,
+                    message,
+                    userIds
+                );
+
+                await _unitOfWork.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                await _hub.Clients.User(product.UserId)
+                    .SendAsync("ReceiveNotification", new NotificationDto
+                    {
+                        Id = notifications?.FirstOrDefault()?.Id,
+                        NotificationType = NotificationType.PRODUCT_APPROVED,
+                        Title = title,
+                        Message = message,
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        IsDeleted = false,
+                        Mode = NotificationMode.Personal
+                    });
+
                 _logger.LogInformation(
-                    "Product {ProductId} is already approved (Status = Active)", id);
+                    "Product {ProductId} approved successfully", id);
+
                 return true;
             }
-
-            product.Status = ProductStatus.Active;
-
-            _unitOfWork.ProductRepository.Update(product);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Product {ProductId} approved successfully", id);
-
-            return true;
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error while approving product {ProductId}", id);
+                throw;
+            }
         }
 
 
@@ -488,44 +583,86 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation(
                 "Rejecting product {ProductId} with reason: {Reason}",
-                req.Id, req.Reason);
+                req.Id, req.Reason
+            );
 
-            var product = await _unitOfWork.ProductRepository.GetProductByAdmin(req.Id);
-            if (product == null)
+            using var tx = await _unitOfWork.BeginTransactionAsync();
+
+            try
             {
-                _logger.LogWarning(
-                    "Product {ProductId} not found for rejection", req.Id);
-                throw new ProductNotFoundException("Product not found");
-            }
+                var product = await _unitOfWork.ProductRepository.GetProductByAdmin(req.Id);
+                if (product == null)
+                {
+                    _logger.LogWarning(
+                        "Product {ProductId} not found for rejection", req.Id);
+                    throw new ProductNotFoundException("Product not found");
+                }
 
-            if (product.Status != ProductStatus.Pending)
-            {
-                _logger.LogWarning(
-                    "Invalid status transition for product {ProductId}. Current: {Status}",
-                    product.Id, product.Status);
+                if (product.Status != ProductStatus.Pending)
+                {
+                    _logger.LogWarning(
+                        "Invalid status transition for product {ProductId}. Current: {Status}",
+                        product.Id, product.Status
+                    );
+                    throw new InvalidProductStateException("Invalid product status");
+                }
 
-                throw new InvalidProductStateException("Invalid product status");
-            }
+                // 1. Update product
+                product.Status = ProductStatus.Cancelled;
+                product.Note = req.Reason;
+                product.UpdatedAt = DateTime.UtcNow;
 
+                _unitOfWork.ProductRepository.Update(product);
 
-            if (product.Status == ProductStatus.Cancelled)
-            {
+                // 2. Notification content
+                var title = "Product Rejected";
+                var message =
+                    $"Your product '{product.Name}' has been rejected." +
+                    (string.IsNullOrWhiteSpace(req.Reason)
+                        ? string.Empty
+                        : $" Reason: {req.Reason}");
+
+                var userIds = new[] { product.UserId };
+
+                // 3. Send notification (CHUNG TRANSACTION)
+                var notifications = await _notificationService.SendAsync(
+                    NotificationType.PRODUCT_REJECTED,
+                    title,
+                    message,
+                    userIds
+                );
+
+                // 4. Commit DB
+                await _unitOfWork.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                // 5. SignalR notify (SAU COMMIT)
+                await _hub.Clients.User(product.UserId)
+                    .SendAsync("ReceiveNotification", new NotificationDto
+                    {
+                        Id = notifications?.FirstOrDefault()?.Id,
+                        NotificationType = NotificationType.PRODUCT_REJECTED,
+                        Title = title,
+                        Message = message,
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        IsDeleted = false,
+                        Mode = NotificationMode.Personal
+                    });
+
                 _logger.LogInformation(
-                    "Product {ProductId} already rejected (Status = Cancelled)", req.Id);
+                    "Product {ProductId} rejected successfully", req.Id);
+
                 return true;
             }
-
-            product.Status = ProductStatus.Cancelled;
-            product.Note = req.Reason;
-
-            _unitOfWork.ProductRepository.Update(product);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Product {ProductId} rejected successfully", req.Id);
-
-            return true;
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error while rejecting product {ProductId}", req.Id);
+                throw;
+            }
         }
+
 
         public async Task<List<ProductShortResponseForList>> GetProductShortListAsync()
         {

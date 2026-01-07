@@ -49,7 +49,6 @@ namespace bidify_be.Controllers
         }
 
         [HttpGet("search")]
-        [Authorize(Roles = "admin")]
         public async Task<ActionResult<ApiResponse<PagedResult<CategoryResponse>>>> GetAllPagingAsync([FromQuery] CategoryQueryRequest req)
         {
             var result = await _categoryServices.FilterAsync(req);

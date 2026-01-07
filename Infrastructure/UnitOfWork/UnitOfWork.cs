@@ -23,6 +23,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
         public ITopupTransactionRepository TopupTransactionRepository { get; }
         public ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
         public IAuctionRepository AuctionRepository { get; }
+        public INotificationRepository NotificationRepository { get; }
 
         public UnitOfWork(
             ApplicationDbContext context, 
@@ -39,7 +40,8 @@ namespace bidify_be.Infrastructure.UnitOfWork
             ITopupTransactionRepository topupTransactionRepository,
             IWalletTransactionRepository walletTransactionRepository,
             ITransitionPackageBidRepository transitionPackageBidRepository,
-            IAuctionRepository auctionRepository)
+            IAuctionRepository auctionRepository,
+            INotificationRepository notificationRepository)
         {
             _context = context;
             UserRepository = userRepository;
@@ -56,6 +58,7 @@ namespace bidify_be.Infrastructure.UnitOfWork
             WalletTransactionRepository = walletTransactionRepository;
             TransitionPackageBidRepository = transitionPackageBidRepository;
             AuctionRepository = auctionRepository;
+            NotificationRepository = notificationRepository;
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
