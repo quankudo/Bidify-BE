@@ -1,4 +1,6 @@
-﻿using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Entities;
+using bidify_be.Domain.Enums;
+using bidify_be.DTOs.Users;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 namespace bidify_be.Hubs
@@ -42,7 +44,7 @@ namespace bidify_be.Hubs
         {
             await Groups.AddToGroupAsync(
                 Context.ConnectionId,
-                auctionId.ToString()
+                $"auction-{auctionId}"
             );
         }
 
@@ -50,21 +52,30 @@ namespace bidify_be.Hubs
         {
             await Groups.RemoveFromGroupAsync(
                 Context.ConnectionId,
-                auctionId.ToString()
+                $"auction-{auctionId}"
             );
         }
 
-        //public async Task BroadcastNewBid(Guid auctionId, BidDto bid)
-        //{
-        //    await Clients.Group(auctionId.ToString())
-        //        .SendAsync("NewBid", bid);
-        //}
+        public async Task BroadcastNewBid(Guid auctionId, BidDto bid)
+        {
+            await Clients.Group(auctionId.ToString())
+                .SendAsync("NewBid", bid);
+        }
 
         //public async Task BroadcastAuctionEnded(Guid auctionId, AuctionEndedDto auctionInfo)
         //{
         //    await Clients.Group(auctionId.ToString())
         //        .SendAsync("AuctionEnded", auctionInfo);
         //}
+    }
+
+    public record BidDto
+    {
+        public Guid Id { get; set; }
+        public UserShortResponse User { get; set; }
+        public DateTime createdAt { get; set; }
+        public Guid AuctionId { get; set; }
+        public decimal Price { get; set; } 
     }
 
     public record NotificationDto

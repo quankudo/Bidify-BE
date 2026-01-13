@@ -22,6 +22,13 @@ namespace bidify_be.DTOs.Product
         public ICollection<ProductTagResponse> ProductTags { get; set; } = new List<ProductTagResponse>();
     }
 
+    public class ProductShortForOrderResponse
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Thumbnail { get; set; } = string.Empty;
+    }
+
     public class ProductShortResponse //hiển thị ở trang quản lý sản phẩm của mỗi user
     {
         public Guid Id { get; set; }

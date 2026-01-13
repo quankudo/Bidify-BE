@@ -12,7 +12,7 @@ namespace bidify_be.Services.Interfaces
         Task<UserResponse> UpdateAsync(UpdateUserRequest request);
         Task DeleteAsync(Guid id);
         Task<RevokeRefreshTokenResponse> RevokeRefreshToken(RefreshTokenRequest refreshTokenRemoveRequest);
-        Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request);
+        Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken);
 
         Task<TokenWithUserResponse> LoginAsync(UserLoginRequest request);
 

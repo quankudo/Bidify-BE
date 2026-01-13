@@ -10,6 +10,7 @@
         public string Role { get; set; }
         public string Avatar { get; set; }
         public string ReferralCode { get; set; }
+        public int BidCount { get; set; } = 0;
         public decimal Balance { get; set; }
         public decimal RateStar { get; set; }
         public DateTime CreateAt { get; set; }

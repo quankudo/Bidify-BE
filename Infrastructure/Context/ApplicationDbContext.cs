@@ -26,6 +26,8 @@ namespace bidify_be.Infrastructure.Context
         public DbSet<AuctionTag> AuctionTags { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<UserNotification> UserNotifications { get; set; }
+        public DbSet<BidsHistory> BidsHistories { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)

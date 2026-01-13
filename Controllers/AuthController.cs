@@ -143,23 +143,41 @@ namespace bidify_be.Controllers
         }
 
         [HttpPost("auth/refresh-token")]
-        [Authorize]
-        public async Task<ActionResult<ApiResponse<RefreshTokenResponse>>> RefreshToken([FromBody] RefreshTokenRequest request)
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<string>>> RefreshToken()
         {
-            var result = await _userService.RefreshTokenAsync(request);
+            // Lấy refresh token từ cookie
+            var refreshToken = Request.Cookies["refresh-token"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return BadRequest(ApiResponse<string>.FailResponse("Refresh token missing"));
+            }
+
+            // Gọi service để refresh token
+            var result = await _userService.RefreshTokenAsync(refreshToken);
 
             if (result == null)
             {
-                return BadRequest(ApiResponse<RefreshTokenResponse>.FailResponse(
+                return BadRequest(ApiResponse<string>.FailResponse(
                     "Invalid or expired refresh token"
                 ));
             }
 
-            return Ok(ApiResponse<RefreshTokenResponse>.SuccessResponse(
-                result,
+            // Set lại AccessToken cookie (HttpOnly)
+            Response.Cookies.Append("jwt-token", result.AccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(2)
+            });
+
+            return Ok(ApiResponse<string>.SuccessResponse(
                 "Token refreshed successfully"
             ));
         }
+
 
 
         [HttpPost("auth/revoke-refresh-token")]
@@ -177,10 +195,10 @@ namespace bidify_be.Controllers
 
         [HttpGet("current-user")]
         [Authorize]
-        public async Task<IActionResult> GetCurrentUser()
+        public async Task<ActionResult<ApiResponse<CurrentUserResponse>>> GetCurrentUser()
         {
             var response = await _userService.GetCurrentUserAsync();
-            return Ok(response);
+            return Ok(ApiResponse<CurrentUserResponse>.SuccessResponse(response));
         }
 
 

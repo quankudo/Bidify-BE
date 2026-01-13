@@ -25,6 +25,28 @@ namespace bidify_be.DTOs.Auction
         public List<AuctionTagResponse> AuctionTag { get; set; } = new List<AuctionTagResponse>();
     }
 
+    public class AuctionDetailResponseForUser
+    {
+        public Guid Id { get; set; }
+        public string UserId { get; set; }
+        public Guid ProductId { get; set; }
+        public int BidCount { get; set; } = 0;
+        public DateTime StartAt { get; set; }
+        public DateTime EndAt { get; set; }
+        public decimal BuyNowPrice { get; set; }
+        public decimal StepPrice { get; set; }
+        public decimal StartPrice { get; set; }
+        public AuctionStatus Status { get; set; }
+        public string Note { get; set; } = string.Empty;
+        public string WinnerId { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public ProductResponse Product { get; set; }
+        public UserShortResponse User { get; set; }
+        public UserShortResponse Winner { get; set; }
+        public List<AuctionTagResponse> AuctionTag { get; set; } = new List<AuctionTagResponse>();
+    }
+
     public class AuctionDetailResponseForSeller
     {
         public Guid Id { get; set; }
@@ -62,6 +84,11 @@ namespace bidify_be.DTOs.Auction
         public DateTime CreatedAt { get; set; } 
         public DateTime UpdatedAt { get; set; } 
         public ProductShortResponse Product { get; set; }
+    }
+
+    public class EndedAuctionShortResponse : AuctionShortResponse
+    {
+        public UserShortResponse Winner { get; set; }
     }
 
     public class AuctionShortResponseForUpdate

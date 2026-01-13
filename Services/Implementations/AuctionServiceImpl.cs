@@ -4,6 +4,7 @@ using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Auction;
+using bidify_be.DTOs.BidsHistory;
 using bidify_be.DTOs.Product;
 using bidify_be.DTOs.Users;
 using bidify_be.Exceptions;
@@ -28,6 +29,7 @@ namespace bidify_be.Services.Implementations
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly INotificationService _notificationService;
+        private readonly IBidsHistoryService _bidsHistoryService;
         private readonly IHubContext<AppHub> _hub;
 
         public AuctionServiceImpl(IUnitOfWork unitOfWork,
@@ -38,6 +40,7 @@ namespace bidify_be.Services.Implementations
             IMapper mapper,
             UserManager<ApplicationUser> userManager,
             INotificationService notificationService,
+            IBidsHistoryService bidsHistoryService,
             IHubContext<AppHub> hubContext
             )
         {
@@ -49,6 +52,7 @@ namespace bidify_be.Services.Implementations
             _currentUserService = currentUserService;
             _userManager = userManager;
             _notificationService = notificationService;
+            _bidsHistoryService = bidsHistoryService;
             _hub = hubContext;
         }
 
@@ -308,6 +312,57 @@ namespace bidify_be.Services.Implementations
             return result;
         }
 
+        public async Task<AuctionDetailResponseForUser> GetAuctionDetailForUserAsync(Guid auctionId)
+        {
+            var auction = await _unitOfWork.AuctionRepository.GetAuctionDetailForUserAsync(auctionId)
+                ?? throw new AuctionNotFoundException("Auction not found");
+
+            return new AuctionDetailResponseForUser
+            {
+                Id = auction.Id,
+                UserId = auction.UserId,
+                ProductId = auction.ProductId,
+                BidCount = auction.BidCount,
+                StartAt = auction.StartAt,
+                EndAt = auction.EndAt,
+                BuyNowPrice = auction.BuyNowPrice ?? 0,
+                StepPrice = auction.StepPrice,
+                StartPrice = auction.StartPrice,
+                Status = auction.Status,
+                Note = auction.Note,
+                WinnerId = auction.WinnerId ?? string.Empty,
+                CreatedAt = auction.CreatedAt,
+                UpdatedAt = auction.UpdatedAt,
+
+                Product = _mapper.Map<ProductResponse>(auction.Product),
+
+                User = new UserShortResponse
+                {
+                    Id = auction.User.Id,
+                    UserName = auction.User.UserName,
+                    Avatar = auction.User.Avatar,
+                    RateStar = auction.User.RateStar
+                },
+
+                Winner = auction.Winner != null
+                    ? new UserShortResponse
+                    {
+                        Id = auction.Winner.Id,
+                        UserName = auction.Winner.UserName,
+                        Avatar = auction.Winner.Avatar,
+                        RateStar = auction.Winner.RateStar
+                    }
+                    : null,
+
+                AuctionTag = auction.AuctionTags
+                    .Select(t => new AuctionTagResponse
+                    {
+                        TagId = t.TagId,
+                        TagName = t.Tag.Title
+                    })
+                    .ToList()
+            };
+        }
 
         public async Task<AuctionDetailResponse> GetAuctionDetailAsync(Guid auctionId)
         {
@@ -445,25 +500,23 @@ namespace bidify_be.Services.Implementations
                 request.BidPrice
             );
 
-            // 1. Auth
             var userId = _currentUserService.GetUserId();
             EnsureAuthenticatedUser(userId);
 
-            using var tx = await _unitOfWork.BeginTransactionAsync();
+            string? previousWinnerId = null;
+            Auction auction;
+            ApplicationUser user;
+            BidsHistory bidHistory;
 
+            await using var tx = await _unitOfWork.BeginTransactionAsync();
             try
             {
-                // 2. Lock auction (FOR UPDATE)
-                var auction = await _unitOfWork.AuctionRepository
-                    .GetByIdWithLockAsync(request.AuctionId);
+                // 1. Lock auction
+                auction = await _unitOfWork.AuctionRepository
+                    .GetByIdWithLockAsync(request.AuctionId)
+                    ?? throw new KeyNotFoundException("Auction not found.");
 
-                if (auction == null)
-                {
-                    _logger.LogWarning("Auction not found: {AuctionId}", request.AuctionId);
-                    throw new KeyNotFoundException("Auction not found.");
-                }
-
-                // 3. Business rules - auction state
+                // 2. Business rules
                 if (auction.Status != AuctionStatus.Approved)
                     throw new InvalidOperationException("Auction is not open for bidding.");
 
@@ -474,57 +527,52 @@ namespace bidify_be.Services.Implementations
                 if (auction.UserId == userId)
                     throw new InvalidOperationException("Owner cannot bid on own auction.");
 
-                // 4. Lock user (FOR UPDATE)
-                var user = await _unitOfWork.UserRepository
-                    .GetByIdWithLockAsync(userId);
+                // 3. Lock user
+                user = await _unitOfWork.UserRepository
+                    .GetByIdWithLockAsync(userId)
+                    ?? throw new KeyNotFoundException("User not found.");
 
-                if (user == null)
-                    throw new KeyNotFoundException("User not found.");
-
-                // 5. Check bid balance
                 if (user.BidCount < BidConfig.CostPerBid)
-                {
-                    _logger.LogWarning(
-                        "Insufficient bids. UserId={UserId}, Balance={Balance}",
-                        userId,
-                        user.BidCount
-                    );
-
                     throw new InsufficientBidException();
-                }
 
-                // 6. Price validation
+                // 4. Price validation
                 var currentPrice = auction.BuyNowPrice ?? auction.StartPrice;
                 var minNextPrice = currentPrice + auction.StepPrice;
 
                 if (request.BidPrice < minNextPrice)
+                    throw new InvalidOperationException($"Bid must be ≥ {minNextPrice}");
+
+                if ((request.BidPrice - currentPrice) % auction.StepPrice != 0)
                     throw new InvalidOperationException(
-                        $"Bid must be at least {minNextPrice}"
+                        $"Bid must increase by step {auction.StepPrice}"
                     );
 
-                // 7. Update auction
+                // 5. Save old winner BEFORE overwrite
+                previousWinnerId = auction.WinnerId;
+
+                // 6. Update auction
                 auction.BidCount += 1;
                 auction.BuyNowPrice = request.BidPrice;
                 auction.WinnerId = userId;
                 auction.UpdatedAt = DateTime.UtcNow;
 
-                // 8. Deduct bids
+                // 7. Deduct bid
                 user.BidCount -= BidConfig.CostPerBid;
 
+                // 8. Save bid history
+                var bidHistoryRequest = new CreateBidsHistoryRequest
+                {
+                    AuctionId = auction.Id,
+                    UserId = user.Id,
+                    Price = request.BidPrice
+                };
+
+                bidHistory = await _bidsHistoryService.CreateBidsHistoryAsync(bidHistoryRequest);
                 _unitOfWork.AuctionRepository.Update(auction);
                 _unitOfWork.UserRepository.Update(user);
 
                 await _unitOfWork.SaveChangesAsync();
                 await tx.CommitAsync();
-
-                _logger.LogInformation(
-                    "Bid placed successfully. AuctionId={AuctionId}, UserId={UserId}, RemainingBids={RemainingBids}",
-                    auction.Id,
-                    userId,
-                    user.BidCount
-                );
-
-                return true;
             }
             catch (Exception ex)
             {
@@ -532,9 +580,81 @@ namespace bidify_be.Services.Implementations
                 _logger.LogError(ex, "Error while placing bid");
                 throw;
             }
+
+            // 9. Notification – previous winner (outbid)
+            if (!string.IsNullOrEmpty(previousWinnerId) && previousWinnerId != userId)
+            {
+                await _notificationService.SendWithSeparateTransactionAsync(
+                    NotificationType.NEW_BID,
+                    "Bạn đã bị vượt giá",
+                    $"Giá mới hiện tại là {auction.BuyNowPrice:N0}₫",
+                    new[] { previousWinnerId },
+                    auction.Id
+                );
+            }
+
+            // 10. Notification – seller
+            await _notificationService.SendWithSeparateTransactionAsync(
+                NotificationType.NEW_BID,
+                "Có lượt đấu giá mới",
+                $"{user.UserName} vừa đặt giá {auction.BuyNowPrice:N0}₫",
+                new[] { auction.UserId },
+                auction.Id
+            );
+
+            var notifyPayload = new NotificationDto
+            {
+                NotificationType = NotificationType.NEW_BID,
+                CreatedAt = DateTime.UtcNow,
+                RelatedAuctionId = auction.Id,
+                Mode = NotificationMode.Personal
+            };
+
+            if (previousWinnerId != null && previousWinnerId != userId)
+            {
+                await _hub.Clients.User(previousWinnerId)
+                    .SendAsync("ReceiveNotification", notifyPayload with
+                    {
+                        Title = "Bạn đã bị vượt giá",
+                        Message = $"Giá mới: {auction.BuyNowPrice:N0}₫"
+                    });
+            }
+
+            // seller
+            await _hub.Clients.User(auction.UserId)
+                .SendAsync("ReceiveNotification", notifyPayload with
+                {
+                    Title = "Có lượt đấu giá mới",
+                    Message = $"{user.UserName} vừa đặt giá {auction.BuyNowPrice:N0}₫"
+                });
+
+            // 11. Realtime broadcast
+            await _hub.Clients
+                .Group($"auction-{auction.Id}")
+                .SendAsync("NewBid", new BidDto
+                {
+                    Id = bidHistory.Id,
+                    AuctionId = auction.Id,
+                    Price = auction.BuyNowPrice!.Value,
+                    User = new UserShortResponse
+                    {
+                        Avatar = user.Avatar,
+                        Id = user.Id,
+                        RateStar = user.RateStar,
+                        UserName = user.UserName
+                    },
+                    createdAt = DateTime.UtcNow
+                });
+
+            _logger.LogInformation(
+                "Bid placed successfully. AuctionId={AuctionId}, UserId={UserId}, Price={Price}",
+                auction.Id,
+                userId,
+                auction.BuyNowPrice
+            );
+
+            return true;
         }
-
-
 
 
         public async Task<bool> RejectAuctionAsync(
@@ -796,6 +916,16 @@ namespace bidify_be.Services.Implementations
                     })
                     .ToList()
             };
+        }
+
+        public async Task<PagedResult<EndedAuctionShortResponse>> GetEndedAuctionsAsync(AuctionQueryRequest request)
+        {
+            _logger.LogInformation("Getting ended auctions");
+
+            var result = await _unitOfWork.AuctionRepository
+                .GetEndedAuctionsAsync(request);
+
+            return result;
         }
 
     }

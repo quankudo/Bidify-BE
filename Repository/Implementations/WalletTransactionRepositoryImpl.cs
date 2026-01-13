@@ -1,4 +1,5 @@
 ﻿using bidify_be.Domain.Entities;
+using bidify_be.Domain.Enums;
 using bidify_be.DTOs;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
@@ -19,6 +20,11 @@ namespace bidify_be.Repository.Implementations
         public async Task AddAsync(WalletTransaction transaction)
         {
             await _context.WalletTransactions.AddAsync(transaction);
+        }
+
+        public async Task<bool> ExistsAsync(WalletTransactionType type, Guid id)
+        {
+            return await _context.WalletTransactions.AsNoTracking().AnyAsync(x => x.Type == type && x.ReferenceId == id);
         }
 
         public async Task<List<WalletTransaction>> GetAllByUserIdAsync(WalletTransactionQuery req, string userId)

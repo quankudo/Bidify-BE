@@ -14,5 +14,7 @@
         PRODUCT_REJECTED = 10,
         AUCTION_APPROVED = 11,
         AUCTION_REJECTED = 12,
+        AUCTION_WON = 13,
+        ORDER_PAID = 14,
     }
 }

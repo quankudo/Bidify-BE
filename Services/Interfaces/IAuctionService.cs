@@ -37,6 +37,9 @@ namespace bidify_be.Services.Interfaces
         Task<PagedResult<AuctionShortResponse>>
             GetActiveAuctionsAsync(AuctionQueryRequest request);
 
+        Task<PagedResult<EndedAuctionShortResponse>>
+            GetEndedAuctionsAsync(AuctionQueryRequest request);
+
         /// <summary>
         /// Danh sách auction của user hiện tại (User - trang quản lý)
         /// </summary>
@@ -67,5 +70,7 @@ namespace bidify_be.Services.Interfaces
         Task<PagedResult<AuctionShortResponse>> GetAuctionsForAdminAsync(AuctionQueryRequest request);
 
         Task<AuctionShortResponseForUpdate> GetAuctionForUpdateAsync(Guid auctionId);
+
+        Task<AuctionDetailResponseForUser> GetAuctionDetailForUserAsync(Guid auctionId);
     }
 }

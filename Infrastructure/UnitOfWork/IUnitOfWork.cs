@@ -20,6 +20,8 @@ namespace bidify_be.Infrastructure.UnitOfWork
         ITransitionPackageBidRepository TransitionPackageBidRepository { get; }
         IAuctionRepository AuctionRepository { get; }
         INotificationRepository NotificationRepository { get; }
+        IBidsHistoryRepository BidsHistoryRepository { get; }
+        IOrderRepository OrderRepository { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

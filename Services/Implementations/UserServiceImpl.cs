@@ -192,14 +192,14 @@ namespace bidify_be.Services.Implementations
             return _mapper.Map<CurrentUserResponse>(user);
         }
 
-        public async Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request)
+        public async Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken)
         {
             _logger.LogInformation("RefreshToken");
 
             // Hash the incoming RefreshToken
             using var sha256 = SHA256.Create();
             var hashedInputToken = Convert.ToBase64String(
-                sha256.ComputeHash(Encoding.UTF8.GetBytes(request.RefreshToken))
+                sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken))
             );
 
             // Find user by hashed refresh token
@@ -345,8 +345,6 @@ namespace bidify_be.Services.Implementations
 
             return _mapper.Map<UserResponse>(user);
         }
-
-
 
 
         public async Task DeleteAsync(Guid id)

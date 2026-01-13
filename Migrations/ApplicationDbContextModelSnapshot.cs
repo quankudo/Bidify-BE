@@ -374,6 +374,8 @@ namespace bidify_be.Migrations
 
                     b.HasIndex("UserId");
 
+                    b.HasIndex("WinnerId");
+
                     b.ToTable("Auctions", (string)null);
                 });
 
@@ -390,6 +392,38 @@ namespace bidify_be.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("AuctionTags", (string)null);
+                });
+
+            modelBuilder.Entity("bidify_be.Domain.Entities.BidsHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("AuctionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuctionId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("AuctionId", "CreatedAt");
+
+                    b.ToTable("BidsHistory", (string)null);
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.Category", b =>
@@ -564,6 +598,68 @@ namespace bidify_be.Migrations
                     b.HasIndex("RelatedAuctionId");
 
                     b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("bidify_be.Domain.Entities.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("AuctionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("FinalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReceiverName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("ReceiverPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("WinnerId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuctionId")
+                        .IsUnique();
+
+                    b.HasIndex("SellerId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("WinnerId");
+
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.PackageBid", b =>
@@ -1068,9 +1164,16 @@ namespace bidify_be.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("bidify_be.Domain.Entities.ApplicationUser", "Winner")
+                        .WithMany()
+                        .HasForeignKey("WinnerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Product");
 
                     b.Navigation("User");
+
+                    b.Navigation("Winner");
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.AuctionTag", b =>
@@ -1092,6 +1195,23 @@ namespace bidify_be.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("bidify_be.Domain.Entities.BidsHistory", b =>
+                {
+                    b.HasOne("bidify_be.Domain.Entities.Auction", null)
+                        .WithMany("BidsHistories")
+                        .HasForeignKey("AuctionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("bidify_be.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("BidsHistories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("bidify_be.Domain.Entities.Gift", b =>
                 {
                     b.HasOne("bidify_be.Domain.Entities.GiftType", null)
@@ -1099,6 +1219,33 @@ namespace bidify_be.Migrations
                         .HasForeignKey("GiftTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("bidify_be.Domain.Entities.Order", b =>
+                {
+                    b.HasOne("bidify_be.Domain.Entities.Auction", "Auction")
+                        .WithOne()
+                        .HasForeignKey("bidify_be.Domain.Entities.Order", "AuctionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("bidify_be.Domain.Entities.ApplicationUser", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("bidify_be.Domain.Entities.ApplicationUser", "Winner")
+                        .WithMany()
+                        .HasForeignKey("WinnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Auction");
+
+                    b.Navigation("Seller");
+
+                    b.Navigation("Winner");
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.Product", b =>
@@ -1206,12 +1353,16 @@ namespace bidify_be.Migrations
                 {
                     b.Navigation("Addresses");
 
+                    b.Navigation("BidsHistories");
+
                     b.Navigation("UserNotifications");
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.Auction", b =>
                 {
                     b.Navigation("AuctionTags");
+
+                    b.Navigation("BidsHistories");
                 });
 
             modelBuilder.Entity("bidify_be.Domain.Entities.Notification", b =>

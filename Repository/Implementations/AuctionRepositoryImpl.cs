@@ -3,6 +3,7 @@ using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Auction;
 using bidify_be.DTOs.Product;
+using bidify_be.DTOs.Users;
 using bidify_be.Infrastructure.Context;
 using bidify_be.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -207,6 +208,115 @@ namespace bidify_be.Repository.Implementations
                 .Include(a => a.AuctionTags)
                     .ThenInclude(at => at.Tag)
                 .FirstOrDefaultAsync(a => a.Id == auctionId);
+        }
+
+        public async Task<Auction?> GetAuctionDetailForUserAsync(Guid auctionId)
+        {
+            return await _context.Auctions
+                .AsNoTracking()
+
+                .Include(a => a.User)
+                .Include(a => a.Winner)
+
+                .Include(a => a.Product)
+                    .ThenInclude(p => p.Images)
+
+                .Include(a => a.Product)
+                    .ThenInclude(p => p.Attributes)
+
+                .Include(a => a.Product)
+                    .ThenInclude(p => p.ProductTags)
+                        .ThenInclude(pt => pt.Tag)
+
+                .Include(a => a.AuctionTags)
+                    .ThenInclude(at => at.Tag)
+
+                .FirstOrDefaultAsync(a => a.Id == auctionId);
+        }
+
+        public async Task<Auction?> GetByIdForBackgroudJobAsync(Guid auctionId)
+        {
+            return await _context.Auctions
+                .AsNoTracking()
+                .Include(a => a.Winner)
+                .FirstOrDefaultAsync(x => x.Id == auctionId);
+        }
+
+        public async Task<PagedResult<EndedAuctionShortResponse>> GetEndedAuctionsAsync(AuctionQueryRequest request)
+        {
+            var now = DateTime.UtcNow;
+
+            var query = _context.Auctions
+                .AsNoTracking()
+                .Where(x =>
+                    (x.Status == AuctionStatus.EndedNoBids || x.Status == AuctionStatus.EndedWithBids) &&
+                    x.EndAt <= now);
+
+            query = ApplyFilter(query, request);
+
+            var totalItems = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(x => new EndedAuctionShortResponse
+                {
+                    Id = x.Id,
+                    UserId = x.UserId,
+                    ProductId = x.ProductId,
+                    BidCount = x.BidCount,
+                    StartAt = x.StartAt,
+                    EndAt = x.EndAt,
+                    BuyNowPrice = x.BuyNowPrice ?? 0,
+                    StepPrice = x.StepPrice,
+                    StartPrice = x.StartPrice,
+                    Status = x.Status,
+                    Note = x.Note ?? "",
+                    WinnerId = x.WinnerId ?? "",
+                    CreatedAt = x.CreatedAt,
+                    UpdatedAt = x.UpdatedAt,
+
+                    Winner = x.Winner == null ? null : new UserShortResponse
+                    {
+                        Id = x.Winner.Id,
+                        UserName = x.Winner.UserName ?? "",
+                        Avatar = x.Winner.Avatar ?? "",
+                        RateStar = x.Winner.RateStar,
+                    },
+                    Product = new ProductShortResponse
+                    {
+                        Id = x.Product.Id,
+                        Name = x.Product.Name,
+                        Description = x.Product.Description,
+                        CategoryId = x.Product.CategoryId,
+                        Brand = x.Product.Brand,
+                        Status = x.Product.Status,
+                        Condition = x.Product.Condition,
+                        Thumbnail = x.Product.Thumbnail,
+                    }
+                })
+                .ToListAsync();
+
+            return new PagedResult<EndedAuctionShortResponse>(
+                items,
+                totalItems,
+                request.PageNumber,
+                request.PageSize
+            );
+        }
+
+        public async Task<List<Auction>> GetEndedButNotProcessedAsync(
+            DateTime nowUtc,
+            int batchSize = 100)
+        {
+            return await _context.Auctions
+                .Where(a =>
+                    a.Status == AuctionStatus.Approved &&
+                    a.EndAt <= nowUtc)
+                .OrderBy(a => a.EndAt)
+                .Take(batchSize)
+                .ToListAsync();
         }
     }
 }

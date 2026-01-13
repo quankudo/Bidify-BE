@@ -2,6 +2,6 @@
 {
     public enum WalletTransactionType
     {
-        Topup, BuyBidPackage, PayFinalProduct, Refund, AdminAdjust, Fee
+        Topup, BuyBidPackage, PayFinalProduct, Refund, AdminAdjust, Fee,
     }
 }

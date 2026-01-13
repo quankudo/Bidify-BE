@@ -16,6 +16,7 @@ using bidify_be.Exceptions;
 using bidify_be.Extensions;
 using bidify_be.Hubs;
 using bidify_be.Infrastructure.Context;
+using bidify_be.Infrastructure.Hangfire.Jobs;
 using bidify_be.Infrastructure.Mapping;
 using bidify_be.Infrastructure.Seed;
 using bidify_be.Infrastructure.UnitOfWork;
@@ -38,9 +39,12 @@ using bidify_be.Validators.Users;
 using bidify_be.Validators.Voucher;
 using CloudinaryDotNet;
 using FluentValidation;
+using Hangfire;
+using Hangfire.MySql;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +72,28 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+//Hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UseStorage(
+        new MySqlStorage(
+            builder.Configuration.GetConnectionString("HangfireConnection"),
+            new MySqlStorageOptions
+            {
+                TablesPrefix = "Hangfire_", // tránh trùng table
+                TransactionIsolationLevel = IsolationLevel.ReadCommitted,
+                QueuePollInterval = TimeSpan.FromSeconds(15),
+                JobExpirationCheckInterval = TimeSpan.FromHours(1),
+                CountersAggregateInterval = TimeSpan.FromMinutes(5),
+                PrepareSchemaIfNecessary = true // tự tạo table
+            }
+        )
+    );
+});
+
+builder.Services.AddHangfireServer();
+//-------------------------------------------
 
 builder.Services.Configure<MailSettings>(
     builder.Configuration.GetSection("MailSettings"));
@@ -145,7 +171,12 @@ builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransitionPackageBidService, TransitionPackageBidServiceImpl>();
 builder.Services.AddScoped<IAuctionService, AuctionServiceImpl>();
 builder.Services.AddScoped<INotificationService, NotificationServiceImpl>();
+builder.Services.AddScoped<IDashboardService, DashboardServiceImpl>();
+builder.Services.AddScoped<IBidsHistoryService, BidsHistoryServiceImpl>();
+builder.Services.AddScoped<IOrderService, OrderServiceImpl>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddScoped<EndAuctionJob>();
+builder.Services.AddScoped<ScanEndedAuctionsJob>();
 
 // Adding Repositories and UnitOfWork
 builder.Services.AddScoped<IUserRepository, UserRepositoryImpl>();
@@ -163,6 +194,9 @@ builder.Services.AddScoped<IWalletTransactionRepository, WalletTransactionReposi
 builder.Services.AddScoped<ITransitionPackageBidRepository, TransitionPackageBidRepositoryImpl>();
 builder.Services.AddScoped<IAuctionRepository, AuctionRepositoryImpl>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepositoryImpl>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepositoryImpl>();
+builder.Services.AddScoped<IBidsHistoryRepository, BidsHistoryRepositoryImpl>();
+builder.Services.AddScoped<IOrderRepository, OrderRepositoryImpl>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -176,6 +210,17 @@ builder.Services.ConfigureCors();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider
+        .GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.AddOrUpdate<ScanEndedAuctionsJob>(
+        "scan-ended-auctions",
+        job => job.ExecuteAsync(),
+        Cron.Minutely
+    );
+}
 //Khởi tạo tài khoản admin nếu chưa có
 using (var scope = app.Services.CreateScope())
 {
@@ -197,6 +242,8 @@ app.UseHttpsRedirection();
 app.UseExceptionHandler();
 
 app.UseAuthorization();
+
+app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
 

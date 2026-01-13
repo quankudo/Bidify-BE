@@ -2,6 +2,7 @@
 using bidify_be.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Reflection.Emit;
 
 namespace bidify_be.Infrastructure.Configurations
 {
@@ -54,6 +55,11 @@ namespace bidify_be.Infrastructure.Configurations
                    .WithMany()
                    .HasForeignKey(x => x.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(a => a.Winner)
+                    .WithMany()
+                    .HasForeignKey(a => a.WinnerId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.Product)
                    .WithMany()

@@ -112,6 +112,17 @@ namespace bidify_be.Controllers
                 .SuccessResponse(result, "Fetched active auctions successfully"));
         }
 
+        [HttpGet("ended")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<PagedResult<EndedAuctionShortResponse>>>> GetEnded(
+            [FromQuery] AuctionQueryRequest request)
+        {
+            var result = await _auctionService.GetEndedAuctionsAsync(request);
+
+            return Ok(ApiResponse<PagedResult<EndedAuctionShortResponse>>
+                .SuccessResponse(result, "Fetched ended auctions successfully"));
+        }
+
         // ------------------ GET FOR UPDATE ------------------
         [HttpGet("{id:guid}/for-update")]
         [Authorize]
@@ -146,6 +157,19 @@ namespace bidify_be.Controllers
 
             return Ok(ApiResponse<PagedResult<AuctionShortResponse>>
                 .SuccessResponse(result, "Fetched auctions successfully"));
+        }
+
+        [HttpGet("{id:guid}/user")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<AuctionDetailResponseForUser>>> GetDetailForUser(
+            [FromRoute] Guid id)
+        {
+            var result = await _auctionService.GetAuctionDetailForUserAsync(id);
+
+            return Ok(ApiResponse<AuctionDetailResponseForUser>.SuccessResponse(
+                result,
+                "Fetched auction detail successfully"
+            ));
         }
 
         [HttpGet("{id:guid}")]
