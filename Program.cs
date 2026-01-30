@@ -1,17 +1,5 @@
 ﻿using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
-using bidify_be.DTOs.Address;
-using bidify_be.DTOs.Auction;
-using bidify_be.DTOs.Auth;
-using bidify_be.DTOs.Category;
-using bidify_be.DTOs.Gift;
-using bidify_be.DTOs.GiftType;
-using bidify_be.DTOs.PackageBid;
-using bidify_be.DTOs.Product;
-using bidify_be.DTOs.Tags;
-using bidify_be.DTOs.TransitionPackageBid;
-using bidify_be.DTOs.Users;
-using bidify_be.DTOs.Voucher;
 using bidify_be.Exceptions;
 using bidify_be.Extensions;
 using bidify_be.Hubs;
@@ -25,20 +13,7 @@ using bidify_be.Repository.Interfaces;
 using bidify_be.Services;
 using bidify_be.Services.Implementations;
 using bidify_be.Services.Interfaces;
-using bidify_be.Validators.Address;
-using bidify_be.Validators.Auction;
-using bidify_be.Validators.Auth;
-using bidify_be.Validators.Category;
-using bidify_be.Validators.Gift;
-using bidify_be.Validators.GiftType;
-using bidify_be.Validators.PackageBid;
-using bidify_be.Validators.Product;
-using bidify_be.Validators.Tags;
-using bidify_be.Validators.TransitionPackageBid;
-using bidify_be.Validators.Users;
-using bidify_be.Validators.Voucher;
 using CloudinaryDotNet;
-using FluentValidation;
 using Hangfire;
 using Hangfire.MySql;
 using Microsoft.AspNetCore.Identity;
@@ -119,38 +94,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSignalR();
 
 // Adding Validators
-builder.Services.AddScoped<IValidator<UserRegisterRequest>, UserRegisterRequestValidator>();
-builder.Services.AddScoped<IValidator<UserLoginRequest>, UserLoginRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddCategoryRequest>, AddCategoryRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateCategoryRequest>, UpdateCategoryRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddPackageBidRequest>, AddPackageBidRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdatePackageBidRequest>, UpdatePackageBidRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddTagRequest>, AddTagRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateTagRequest>, UpdateTagRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddAddressRequest>, AddAddressRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateAddressRequest>, UpdateAddressRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddGiftTypeRequest>, AddGiftTypeRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateGiftTypeRequest>, UpdateGiftTypeRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddGiftRequest>, AddGiftRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateGiftRequest>, UpdateGiftRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddVoucherRequest>, AddVoucherRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateVoucherRequest>, UpdateVoucherRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddProductRequest>, AddProductRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateProductRequest>, UpdateProductRequestValidator>();
-
-builder.Services.AddScoped<IValidator<AddAuctionRequest>, AddAuctionRequestValidator>();
-builder.Services.AddScoped<IValidator<UpdateAuctionRequest>, UpdateAuctionRequestValidator>();
-
-builder.Services.AddScoped<IValidator<TransitionPackageBidRequest>, TransitionPackageBidRequestValidator>();
+builder.Services.AddValidators();
 
 // Adding Services  
 builder.Services.AddScoped<IUserServices, UserServiceImpl>();

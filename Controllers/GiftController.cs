@@ -3,7 +3,6 @@ using bidify_be.DTOs.Gift;
 using bidify_be.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace bidify_be.Controllers
 {

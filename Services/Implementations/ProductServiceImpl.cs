@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bidify_be.Domain.Constants;
 using bidify_be.Domain.Contracts;
 using bidify_be.Domain.Entities;
 using bidify_be.Domain.Enums;
@@ -95,6 +96,11 @@ namespace bidify_be.Services.Implementations
             // 2. Validate
             await ValidateAsync(request, _validatorAdd);
 
+            var cost = BidConfig.CostCreateProduct;
+
+            if (user.BidCount < cost)
+                throw new BusinessException("Not enough bid to create product.");
+
             // 3. Mapping
             var product = _mapper.Map<Product>(request);
             product.UserId = userId;
@@ -122,6 +128,20 @@ namespace bidify_be.Services.Implementations
                             await _fileStorageService.MarkAsUsedAsync(img.PublicId);
                         }
                     }
+                }
+
+                // Minus bidCredit 
+                user.BidCount -= cost;
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    if (updateResult.Errors.Any(e => e.Code == "ConcurrencyFailure"))
+                    {
+                        throw new BusinessException(
+                            "Your bid balance was updated by another request. Please try again.");
+                    }
+
+                    throw new BusinessException("Update user failed");
                 }
 
                 // 6. Insert product

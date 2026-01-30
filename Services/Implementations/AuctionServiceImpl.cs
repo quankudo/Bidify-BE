@@ -520,7 +520,7 @@ namespace bidify_be.Services.Implementations
                 if (auction.Status != AuctionStatus.Approved)
                     throw new InvalidOperationException("Auction is not open for bidding.");
 
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
                 if (now < auction.StartAt || now > auction.EndAt)
                     throw new InvalidOperationException("Auction is not active.");
 

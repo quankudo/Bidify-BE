@@ -1,5 +1,4 @@
 ﻿using bidify_be.Domain.Enums;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace bidify_be.Exceptions
 {
@@ -17,7 +16,12 @@ namespace bidify_be.Exceptions
             ErrorCodeString = errorCode.GetDescription();
         }
     }
-
+    
+    public class BusinessException : AppException
+    {
+        public BusinessException(string message)
+            : base(message, 400, ErrorCode.BusinessException) { }
+    }
 
     public class InsufficientBidException : AppException
     {

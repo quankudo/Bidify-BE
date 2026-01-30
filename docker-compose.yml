@@ -1,0 +1,97 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bidify-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  be:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bidify-be
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5046
+
+      # ===== DATABASE =====
+      ConnectionStrings__mySqlConnection: >
+        Server=mysql;
+        Database=${MYSQL_DATABASE};
+        User=${MYSQL_USER};
+        Password=${MYSQL_PASSWORD};
+
+      ConnectionStrings__HangfireConnection: >
+        Server=mysql;
+        Database=${MYSQL_DATABASE};
+        User=${MYSQL_USER};
+        Password=${MYSQL_PASSWORD};
+        Allow User Variables=true;
+
+      # ===== JWT =====
+      JwtSettings__validIssuer: BidifyAPI
+      JwtSettings__validAudience: https://bidify-vercel-domain.vercel.app
+      JwtSettings__expires: 360
+      JwtSettings__key: ${JWT_KEY}
+
+      # ===== MAIL =====
+      MailSettings__Host: ${MAIL_HOST}
+      MailSettings__Port: ${MAIL_PORT}
+      MailSettings__UserName: ${MAIL_USERNAME}
+      MailSettings__Password: ${MAIL_PASSWORD}
+      MailSettings__From: ${MAIL_FROM}
+
+      # ===== CLOUDINARY =====
+      Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME}
+      Cloudinary__ApiKey: ${CLOUDINARY_API_KEY}
+      Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET}
+
+      # ===== VNPAY =====
+      Vnpay__TmnCode: ${VNPAY_TMN_CODE}
+      Vnpay__HashSecret: ${VNPAY_HASH_SECRET}
+      Vnpay__BaseUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      Vnpay__Command: pay
+      Vnpay__CurrCode: VND
+      Vnpay__Version: "2.1.0"
+      Vnpay__Locale: vn
+      Vnpay__PaymentBackReturnUrl: ${VNPAY_CALLBACK}
+
+      # ===== SYSTEM =====
+      TimeZoneId: SE Asia Standard Time
+
+    ports:
+      - "5046:5046"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mysql_data:

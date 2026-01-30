@@ -68,7 +68,10 @@ namespace bidify_be.Domain.Enums
         InsufficientBid,
 
         [Description("USER_ALREADY_VERIFIED")]
-        UserAlreadyVerified
+        UserAlreadyVerified,
+            
+        [Description("BUSINESS_EXCEPTION")]
+        BusinessException
     }
 
     public static class EnumExtensions

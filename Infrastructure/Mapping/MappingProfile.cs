@@ -107,28 +107,42 @@ namespace bidify_be.Infrastructure.Mapping
                 .ForMember(dest => dest.Tag, opt => opt.Ignore());
 
             CreateMap<AddAuctionRequest, Auction>()
-            // map field đơn giản
-            .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
-            .ForMember(dest => dest.StartAt, opt => opt.MapFrom(src => src.StartAt))
-            .ForMember(dest => dest.EndAt, opt => opt.MapFrom(src => src.EndAt))
-            .ForMember(dest => dest.StepPrice, opt => opt.MapFrom(src => src.StepPrice))
-            .ForMember(dest => dest.StartPrice, opt => opt.MapFrom(src => src.StartPrice))
+                // map field đơn giản
+                .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
 
-            // field hệ thống
-            .ForMember(dest => dest.Status, opt => opt.Ignore())
-            .ForMember(dest => dest.UserId, opt => opt.Ignore())
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.WinnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.StartAt, opt => opt.MapFrom(src =>
+                    TimeZoneInfo.ConvertTimeToUtc(
+                        src.StartAt,
+                        TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")
+                    )
+                ))
 
-            // map AuctionTags
-            .ForMember(dest => dest.AuctionTags,
-                opt => opt.MapFrom(src =>
-                    src.Tags.Select(t => new AuctionTag
-                    {
-                        TagId = t.TagId
-                    })
-                ));
+                .ForMember(dest => dest.EndAt, opt => opt.MapFrom(src =>
+                    TimeZoneInfo.ConvertTimeToUtc(
+                        src.EndAt,
+                        TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")
+                    )
+                ))
+
+                .ForMember(dest => dest.StepPrice, opt => opt.MapFrom(src => src.StepPrice))
+                .ForMember(dest => dest.StartPrice, opt => opt.MapFrom(src => src.StartPrice))
+
+                // field hệ thống
+                .ForMember(dest => dest.Status, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.WinnerId, opt => opt.Ignore())
+
+                // map AuctionTags
+                .ForMember(dest => dest.AuctionTags, opt =>
+                    opt.MapFrom(src =>
+                        src.Tags.Select(t => new AuctionTag
+                        {
+                            TagId = t.TagId
+                        })
+                    ));
+
         }
     }
 }
