@@ -1,6 +1,4 @@
-﻿using AutoMapper;
-using bidify_be.Domain.Contracts;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 
 namespace bidify_be.Exceptions

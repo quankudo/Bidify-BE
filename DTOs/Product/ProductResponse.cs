@@ -3,69 +3,64 @@ using bidify_be.DTOs.Users;
 
 namespace bidify_be.DTOs.Product
 {
-    public class ProductResponse
+    // ================= BASE =================
+    public abstract class ProductBaseResponse
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string Thumbnail { get; set; } = string.Empty;
+    }
+
+    public abstract class ProductInfoResponse : ProductBaseResponse
+    {
         public string Description { get; set; } = string.Empty;
         public Guid CategoryId { get; set; }
-        public string CategoryName { get; set; } = string.Empty;
         public string? Brand { get; set; }
+
         public ProductStatus Status { get; set; }
         public ProductCondition Condition { get; set; }
-        public string Thumbnail { get; set; } = string.Empty;
-        public string ThumbnailPublicId { get; set; } = string.Empty;
+
         public string? Note { get; set; }
+    }
+
+    // ================= DETAIL =================
+    public class ProductResponse : ProductInfoResponse
+    {
+        public string CategoryName { get; set; } = string.Empty;
+
+        public string ThumbnailPublicId { get; set; } = string.Empty;
 
         public ICollection<ProductImageResponse> Images { get; set; } = new List<ProductImageResponse>();
         public ICollection<ProductAttributeResponse> Attributes { get; set; } = new List<ProductAttributeResponse>();
         public ICollection<ProductTagResponse> ProductTags { get; set; } = new List<ProductTagResponse>();
     }
 
-    public class ProductShortForOrderResponse
+    // ================= SHORT =================
+    public class ProductShortResponse : ProductInfoResponse
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Thumbnail { get; set; } = string.Empty;
+        // dùng cho trang quản lý sản phẩm user
     }
 
-    public class ProductShortResponse //hiển thị ở trang quản lý sản phẩm của mỗi user
+    public class ProductShortForOrderResponse : ProductBaseResponse
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public Guid CategoryId { get; set; }
-        public string? Brand { get; set; }
-        public ProductStatus Status { get; set; }
-        public ProductCondition Condition { get; set; }
-        public string Thumbnail { get; set; } = string.Empty;
-        public string? Note { get; set; }
+        // chỉ cần Id, Name, Thumbnail
     }
 
-    public class ProductShortResponseForList //hiển thị ở trang quản lý sản phẩm của mỗi user
+    public class ProductShortResponseForList : ProductBaseResponse
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Thumbnail { get; set; } = string.Empty;
+        // dùng cho list đơn giản
     }
 
-    public class ProductForTableResponse //hiển thị ở table trang admin
+    // ================= ADMIN TABLE =================
+    public class ProductForTableResponse : ProductInfoResponse
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public Guid CategoryId { get; set; }
-        public string? Brand { get; set; }
-        public ProductStatus Status { get; set; }
-        public ProductCondition Condition { get; set; }
-        public string Thumbnail { get; set; } = string.Empty;
-        public string? Note { get; set; }
-        public UserShortResponse User {  get; set; }
+        public UserShortResponse User { get; set; }
     }
 
+    // ================= CHILD DTO =================
     public class ProductImageResponse
     {
-        public Guid Id { get; set; } 
+        public Guid Id { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
         public string PublicId { get; set; } = string.Empty;
     }

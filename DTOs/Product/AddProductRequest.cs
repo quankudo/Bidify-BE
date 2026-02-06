@@ -1,5 +1,4 @@
-﻿using bidify_be.Domain.Entities;
-using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Enums;
 
 namespace bidify_be.DTOs.Product
 {

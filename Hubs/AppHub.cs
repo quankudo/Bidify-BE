@@ -1,5 +1,4 @@
-﻿using bidify_be.Domain.Entities;
-using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Enums;
 using bidify_be.DTOs.Users;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -37,8 +36,6 @@ namespace bidify_be.Hubs
                 .SendAsync("ReceiveNotification", notification);
         }
 
-        // ❌ KHÔNG CẦN JoinAdminGroup / LeaveAdminGroup
-
         // -------- Auction --------
         public async Task JoinAuctionGroup(Guid auctionId)
         {
@@ -61,12 +58,6 @@ namespace bidify_be.Hubs
             await Clients.Group(auctionId.ToString())
                 .SendAsync("NewBid", bid);
         }
-
-        //public async Task BroadcastAuctionEnded(Guid auctionId, AuctionEndedDto auctionInfo)
-        //{
-        //    await Clients.Group(auctionId.ToString())
-        //        .SendAsync("AuctionEnded", auctionInfo);
-        //}
     }
 
     public record BidDto

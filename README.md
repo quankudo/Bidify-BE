@@ -1,7 +1,7 @@
 # 🔨 Bidify – Backend Service
 
-Backend service cho hệ thống đấu giá trực tuyến thời gian thực (Realtime Online Auction Platform),
-xây dựng bằng ASP.NET Core Web API, thiết kế theo Clean Architecture, hướng tới production-ready,
+Backend service cho hệ thống đấu giá trực tuyến thời gian thực (Realtime Online Auction Platform),  
+xây dựng bằng ASP.NET Core Web API, thiết kế theo Clean Architecture, hướng tới production-ready,  
 dễ mở rộng và bảo trì.
 
 Project phục vụ mô hình SPA (React) hoặc Mobile App.
@@ -10,163 +10,184 @@ Project phục vụ mô hình SPA (React) hoặc Mobile App.
 
 ## Tổng quan hệ thống
 
-Bidify là nền tảng đấu giá trực tuyến hỗ trợ nhiều vai trò người dùng:
+Bidify hỗ trợ nhiều vai trò:
 
-- Guest: Xem phiên đấu giá
-- Buyer: Tham gia đấu giá, thanh toán, quản lý ví
-- Seller: Tạo sản phẩm, phiên đấu giá
-- Admin: Quản trị hệ thống, phê duyệt, báo cáo
+- Guest: Xem phiên đấu giá  
+- Buyer: Tham gia đấu giá, thanh toán, quản lý ví  
+- Seller: Tạo sản phẩm, phiên đấu giá  
+- Admin: Quản trị hệ thống, phê duyệt, báo cáo  
 
 ### Chức năng cốt lõi
-- Đấu giá realtime với độ trễ < 1s (SignalR)
-- Quản lý ví và gói Bids
-- Thanh toán và xử lý đơn hàng
-- Khiếu nại và thông báo hệ thống
-- Cơ chế giới thiệu – nhận thưởng
-- Dashboard và báo cáo cho Admin
+
+- Đấu giá realtime < 1s (SignalR)  
+- Quản lý ví & gói Bids  
+- Thanh toán & đơn hàng  
+- Khiếu nại & thông báo  
+- Referral reward  
+- Dashboard Admin  
 
 ---
 
 ## Kiến trúc tổng thể
 
-React (SPA)
-  |
-  | REST API / SignalR
-  v
+```text
+React (SPA / Mobile)
+       │
+       │ REST API / SignalR
+       ▼
 ASP.NET Core Web API
-  |
-  | EF Core / Dapper
-  v
+       │
+       │ EF Core / Dapper
+       ▼
 MySQL Database
+```
 
-- REST API cho nghiệp vụ chính
-- SignalR cho đấu giá realtime và notification
-- Hangfire xử lý background jobs
-- Stateless API (JWT)
+- REST API cho nghiệp vụ  
+- SignalR realtime  
+- Hangfire background jobs  
+- Stateless JWT API  
 
 ---
 
 ## Công nghệ sử dụng
 
-Backend:
-- ASP.NET Core 8
-- Entity Framework Core
-- ASP.NET Identity + JWT
-- SignalR
-- Hangfire
-- AutoMapper
-- FluentValidation
+### Backend
+
+- ASP.NET Core 8  
+- EF Core  
+- Identity + JWT  
+- SignalR  
+- Hangfire  
+- AutoMapper  
+- FluentValidation  
 - MySQL (Pomelo)
 
-Hạ tầng & tích hợp:
-- Docker và Docker Compose
-- Cloudinary (lưu trữ hình ảnh)
-- Mailtrap (email testing)
-- VNPay (payment gateway)
-- GitHub Actions (CI – optional)
+### Hạ tầng
+
+- Docker & Docker Compose  
+- Cloudinary  
+- Mailtrap  
+- VNPay  
+- GitHub Actions  
 
 ---
 
 ## Cấu trúc source code
 
-├── Controllers        (API endpoints – thin controllers)
-├── Domain             (Entities, Enums, Constants)
-├── DTOs               (Request / Response models)
-├── Services           (Business logic)
-├── Repository         (Data access layer)
-├── Infrastructure     (DbContext, EF Config, Hangfire, Mapping)
-├── Validators         (FluentValidation)
-├── Hubs               (SignalR hubs)
-├── Exceptions         (Global exception handling)
-├── Helpers / Extensions
-└── Migrations
+```text
+src/
+├── Controllers/        # API endpoints – thin controllers
+├── Domain/             # Entities, Enums, Constants
+├── DTOs/               # Request / Response models
+├── Services/           # Business logic
+├── Repository/         # Data access layer
+├── Infrastructure/     # DbContext, EF Config, Hangfire, Mapping
+├── Validators/         # FluentValidation
+├── Hubs/               # SignalR hubs
+├── Exceptions/         # Global exception handling
+├── Helpers/
+│   └── Extensions/
+└── Migrations/
+```
 
-Áp dụng Clean Architecture và Separation of Concerns.
-Controller không chứa business logic.
+**Nguyên tắc:**
+
+- Clean Architecture  
+- Separation of Concerns  
+- Controller không chứa business logic  
 
 ---
 
 ## Authentication & Authorization
 
-- Xác thực bằng JWT Bearer Token
-- Tích hợp ASP.NET Identity
-- Role-based authorization:
-  - Guest
-  - Buyer
-  - Seller
-  - Admin
+- JWT Bearer  
+- ASP.NET Identity  
+- Role-based:
+
+  - Guest  
+  - Buyer  
+  - Seller  
+  - Admin  
 
 Header:
+
+```text
 Authorization: Bearer <access_token>
+```
 
 ---
 
 ## Realtime Auction (SignalR)
 
-Hub: /hubs/app
+Hub:
 
-Broadcast:
-- Giá đấu mới
-- Kết thúc phiên đấu giá
-- Thông báo người dùng
+```text
+/hubs/app
+```
 
-Luồng xử lý:
-1. Client join auction room
-2. Server validate bid
-3. Persist bid history
-4. Broadcast realtime
+Flow:
+
+```text
+Client join
+ → Validate bid
+ → Persist
+ → Broadcast
+```
 
 ---
 
 ## Background Jobs (Hangfire)
 
-Sử dụng Hangfire cho các tác vụ nền:
-- Tự động bắt đầu / kết thúc phiên đấu giá
-- Xác định người thắng
-- Phát thưởng referral
-- Gửi email thông báo
-- Scan các phiên đấu giá quá hạn
+- Auto start/end auction  
+- Winner calculation  
+- Referral reward  
+- Email sending  
+- Expired auction scan  
 
-Dashboard: /hangfire
+Dashboard:
+
+```text
+/hangfire
+```
 
 ---
 
-## Docker & Docker Compose
+## Docker
 
-Chạy nhanh bằng Docker:
+Run:
+
+```bash
 docker-compose up -d
+```
 
 Services:
-- api: ASP.NET Core Web API
-- mysql: MySQL database
-- hangfire: background jobs (shared database)
+
+- api  
+- mysql  
+- hangfire  
 
 ---
 
 ## Cấu hình môi trường
 
-File: appsettings.Development.json
+File:
 
+```text
+appsettings.Development.json
+```
+
+```json
 {
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-
   "ConnectionStrings": {
     "mySqlConnection": "",
     "HangfireConnection": ""
   },
-
   "JwtSettings": {
     "validIssuer": "BidifyAPI",
     "validAudience": "",
     "expires": 360,
     "key": ""
   },
-
   "MailSettings": {
     "Host": "",
     "Port": 587,
@@ -174,13 +195,11 @@ File: appsettings.Development.json
     "Password": "",
     "From": ""
   },
-
   "Cloudinary": {
     "CloudName": "",
     "ApiKey": "",
     "ApiSecret": ""
   },
-
   "Vnpay": {
     "TmnCode": "",
     "HashSecret": "",
@@ -190,52 +209,57 @@ File: appsettings.Development.json
     "Version": "2.1.0",
     "Locale": "vn",
     "PaymentBackReturnUrl": ""
-  },
-
-  "TimeZoneId": "SE Asia Standard Time",
-  "AllowedHosts": "*"
+  }
 }
+```
 
 ---
 
-## Chạy local (không dùng Docker)
+## Chạy local
 
+```bash
 dotnet restore
 dotnet ef database update
 dotnet run
+```
 
 Swagger:
+
+```text
 https://localhost:5001/swagger
+```
 
 ---
 
 ## Validation & Error Handling
 
-- Validate input bằng FluentValidation
-- Global exception handler
-- Unified API response format
-- Log và trace lỗi rõ ràng
+- FluentValidation  
+- Global exception handler  
+- Unified response format  
+- Logging rõ ràng  
 
 ---
 
-## Audit & Transaction Tracking
+## Audit & Tracking
 
-- Lưu lịch sử đấu giá
-- Lưu lịch sử ví
-- Lưu lịch sử giao dịch
-- Dễ truy vết và đối soát
+- Bid history  
+- Wallet history  
+- Transaction history  
 
 ---
 
-## Convention & Code Style
+## Convention
 
-- Thin Controller
-- Service-driven business logic
-- Repository + UnitOfWork
+- Thin Controller  
+- Service-driven  
+- Repository + UnitOfWork  
 
-Commit message:
+Commit:
+
+```text
 feat: implement realtime auction bidding
 fix: prevent duplicated wallet transaction
+```
 
 ---
 
@@ -245,67 +269,99 @@ MIT License
 
 ---
 
-==============================
-ARCHITECTURE.md
-==============================
+# ARCHITECTURE
 
-Mục tiêu kiến trúc:
-- Scalability
-- Maintainability
-- Separation of Concerns
-- Realtime performance
-- Production readiness
+## Mục tiêu
 
-Kiến trúc Clean Architecture:
+- Scalability  
+- Maintainability  
+- Separation of Concerns  
+- Realtime performance  
+- Production readiness  
 
+---
+
+## Clean Architecture Flow
+
+```text
 Controller
-  ↓
-Service (Business Logic)
-  ↓
+   ↓
+Service
+   ↓
 Repository
-  ↓
+   ↓
 Database
+```
 
-Domain Layer:
-- Entities
-- Enums
-- Constants
-- Business rules cốt lõi
-- Không phụ thuộc EF, SignalR hay ASP.NET Core
+---
 
-Data Access:
-- EF Core cho CRUD và transaction
-- Dapper cho query phức tạp / dashboard
-- UnitOfWork đảm bảo nhất quán dữ liệu
+## Domain Layer
 
-Realtime (SignalR):
-- Native .NET
-- Scale tốt với Redis backplane
-- Flow: Validate → Persist → Broadcast
+- Entities  
+- Enums  
+- Constants  
+- Core business rules  
+- Không phụ thuộc framework  
 
-Background Processing:
-- Hangfire
-- Persist job vào DB
-- Dashboard trực quan
+---
 
-Security:
-- JWT stateless
-- Role-based authorization
-- Validate mọi input
-- Không expose entity trực tiếp
+## Data Access
 
-Wallet consistency:
-- Mọi biến động ví đều ghi log
-- Không update trực tiếp số dư
-- Tránh race condition khi đấu giá
+- EF Core → CRUD  
+- Dapper → complex query  
+- UnitOfWork → consistency  
 
-Deployment:
-- Docker hóa toàn bộ stack
-- Scale API theo chiều ngang
-- DB và Hangfire dùng chung storage
+---
 
-Future improvements:
-- Redis cache
-- RabbitMQ
-- Microservice Auction
-- Event-driven architecture
+## Realtime
+
+- SignalR  
+- Redis backplane ready  
+
+Flow:
+
+```text
+Validate → Persist → Broadcast
+```
+
+---
+
+## Background Processing
+
+- Hangfire  
+- Persistent jobs  
+- Dashboard  
+
+---
+
+## Security
+
+- JWT stateless  
+- Role-based  
+- Validate input  
+- Không expose entity  
+
+---
+
+## Wallet Consistency
+
+- Log mọi biến động  
+- Không update số dư trực tiếp  
+- Tránh race condition  
+
+---
+
+## Deployment
+
+- Dockerized  
+- Horizontal scaling  
+- Shared storage  
+
+---
+
+## Future Improvements
+
+- Redis cache  
+- RabbitMQ  
+- Microservice Auction  
+- Event-driven architecture  
