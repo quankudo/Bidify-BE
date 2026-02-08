@@ -10,7 +10,7 @@ namespace bidify_be.Infrastructure.Configurations
         {
             builder.ToTable("AuctionTags");
 
-            builder.HasKey(pt => new { pt.AuctionId, pt.TagId });
+            builder.HasKey(pt => new { pt.AuctionId, pt.Id });
 
             builder
                 .HasOne(pt => pt.Auction)
@@ -20,7 +20,7 @@ namespace bidify_be.Infrastructure.Configurations
             builder
                 .HasOne(pt => pt.Tag)
                 .WithMany(t => t.AuctionTags)
-                .HasForeignKey(pt => pt.TagId);
+                .HasForeignKey(pt => pt.Id);
         }
     }
 }

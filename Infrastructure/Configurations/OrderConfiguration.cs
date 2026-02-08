@@ -13,8 +13,8 @@ namespace bidify_be.Infrastructure.Configurations
             builder.HasKey(o => o.Id);
 
             builder.Property(o => o.FinalPrice)
-                   .HasColumnType("decimal(18,2)")
-                   .IsRequired();
+                   .IsRequired()
+                   .HasColumnType("decimal(18,2)");
 
             builder.Property(o => o.Status)
                    .HasConversion<int>() 
@@ -42,7 +42,7 @@ namespace bidify_be.Infrastructure.Configurations
                    .IsRequired();
 
             builder.Property(o => o.UpdatedAt)
-                   .IsRequired();
+                   .IsRequired(false);
 
             // Order - Seller
             builder.HasOne(o => o.Seller)

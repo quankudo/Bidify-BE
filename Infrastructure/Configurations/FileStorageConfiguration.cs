@@ -10,7 +10,7 @@ namespace bidify_be.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<FileStorage> builder)
         {
             // Primary key
-            builder.HasKey(x => x.PublicId);
+            builder.HasKey(x => x.Id);
 
             // PublicId
             builder.Property(x => x.PublicId)

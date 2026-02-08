@@ -14,7 +14,7 @@ namespace bidify_be.Repository.Implementations
             _context = context;
         }
 
-        public async Task<int> GetAddressCountByUserAsync(string userId)
+        public async Task<int> GetAddressCountByUserAsync(Guid userId)
         {
             return await _context.Addresses
                 .Where(a => a.UserId == userId)
@@ -34,7 +34,7 @@ namespace bidify_be.Repository.Implementations
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<List<Address>> GetAddressesByUserIdAsync(string userId)
+        public async Task<List<Address>> GetAddressesByUserIdAsync(Guid userId)
         {
             return await _context.Addresses
                 .AsNoTracking()
@@ -42,7 +42,7 @@ namespace bidify_be.Repository.Implementations
                 .ToListAsync();
         }
 
-        public async Task<Address?> GetDefaultAddress(string userId)
+        public async Task<Address?> GetDefaultAddress(Guid userId)
         {
             return await _context.Addresses
                 .AsNoTracking()

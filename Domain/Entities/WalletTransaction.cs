@@ -1,11 +1,11 @@
-﻿using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Abstractions;
+using bidify_be.Domain.Enums;
 
 namespace bidify_be.Domain.Entities
 {
-    public class WalletTransaction
+    public class WalletTransaction : EntityBase<Guid>
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public decimal Amount { get; set; }
         public WalletTransactionType Type { get; set; }
         public decimal BalanceBefore { get; set; }

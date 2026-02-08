@@ -14,7 +14,7 @@ namespace bidify_be.Infrastructure.Configurations
 
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.UserId)
+            builder.Property(x => x.CreatedBy)
                    .IsRequired()
                    .HasMaxLength(255);
 
@@ -53,7 +53,7 @@ namespace bidify_be.Infrastructure.Configurations
             // ===================== RELATIONSHIPS ==============
             builder.HasOne(x => x.User)
                    .WithMany()
-                   .HasForeignKey(x => x.UserId)
+                   .HasForeignKey(x => x.CreatedBy)
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(a => a.Winner)
@@ -75,7 +75,7 @@ namespace bidify_be.Infrastructure.Configurations
                    .IsRequired();
 
             // ===================== INDEXES ====================
-            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.CreatedBy);
             builder.HasIndex(x => x.ProductId);
             builder.HasIndex(x => x.EndAt);
             builder.HasIndex(x => x.Status);

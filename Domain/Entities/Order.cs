@@ -1,13 +1,14 @@
-﻿using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Abstractions;
+using bidify_be.Domain.Abstractions.Entities;
+using bidify_be.Domain.Enums;
 
 namespace bidify_be.Domain.Entities
 {
-    public class Order
+    public class Order : EntityBase<Guid>, IDateTracking
     {
-        public Guid Id { get; set; }
         public Guid AuctionId { get; set; }
-        public string WinnerId { get; set; } = null!;
-        public string SellerId { get; set; } = null!;
+        public Guid WinnerId { get; set; }
+        public Guid SellerId { get; set; }
         public decimal FinalPrice { get; set; }
         public DateTime? PaidAt { get; set; }
         public string? ReceiverName { get; set; } 
@@ -15,11 +16,11 @@ namespace bidify_be.Domain.Entities
         public string? ShippingAddress { get; set; } 
         public OrderStatus Status { get; set; } = OrderStatus.PendingPayment;
         public string? CancelReason { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public ApplicationUser Seller { get; set; } = null!;
         public ApplicationUser Winner { get; set; } = null!;
         public Auction Auction { get; set; } = null!;
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
     }
 }

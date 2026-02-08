@@ -4,8 +4,10 @@ using bidify_be.DTOs.Address;
 using bidify_be.Exceptions;
 using bidify_be.Helpers;
 using bidify_be.Infrastructure.UnitOfWork;
+using bidify_be.Repository.Interfaces;
 using bidify_be.Services.Interfaces;
 using FluentValidation;
+using UnauthorizedAccessException = bidify_be.Exceptions.UnauthorizedAccessException;
 
 namespace bidify_be.Services.Implementations
 {
@@ -17,6 +19,7 @@ namespace bidify_be.Services.Implementations
         private readonly IValidator<AddAddressRequest> _addValidator;
         private readonly IValidator<UpdateAddressRequest> _updateValidator;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAddressRepository _addressRepository;
 
         public AddressServiceImpl(
             IUnitOfWork unitOfWork,
@@ -24,6 +27,7 @@ namespace bidify_be.Services.Implementations
             ILogger<AddressServiceImpl> logger,
             IValidator<AddAddressRequest> addValidator,
             IValidator<UpdateAddressRequest> updateValidator,
+            IAddressRepository addressRepository,
             ICurrentUserService currentUserService)
         {
             _unitOfWork = unitOfWork;
@@ -32,17 +36,24 @@ namespace bidify_be.Services.Implementations
             _addValidator = addValidator;
             _updateValidator = updateValidator;
             _currentUserService = currentUserService;
+            _addressRepository = addressRepository;
         }
         
         public async Task<AddressResponse> AddAddressAsync(AddAddressRequest request)
         {
             var currentUserId = _currentUserService.GetUserId();
 
+            if (currentUserId == null)
+            {
+                _logger.LogError("Current user ID is null");
+                throw new UnauthorizedAccessException("User must be logged in to add an address");
+            }
+
             request.UserId = currentUserId;
 
             _logger.LogInformation("Creating address for user {UserId}", request.UserId);
 
-            int addressCount = await _unitOfWork.Addresses.GetAddressCountByUserAsync(currentUserId);
+            int addressCount = await _addressRepository.GetAddressCountByUserAsync(currentUserId.Value);
 
             if (addressCount >= 4)
             {
@@ -66,18 +77,18 @@ namespace bidify_be.Services.Implementations
             // Nếu là default -> clear default cũ
             if (address.IsDefault)
             {
-                var oldDefault = await _unitOfWork.Addresses.GetDefaultAddress(request.UserId);
+                var oldDefault = await _addressRepository.GetDefaultAddress(request.UserId.Value);
                 if (oldDefault != null)
                 {
                     oldDefault.IsDefault = false;
-                    _unitOfWork.Addresses.UpdateAddress(oldDefault);
+                    _addressRepository.UpdateAddress(oldDefault);
                 }
             }
 
             address.CreatedAt = DateTime.UtcNow;
             address.UpdatedAt = DateTime.UtcNow;
 
-            await _unitOfWork.Addresses.AddAddressAsync(address);
+            await _addressRepository.AddAddressAsync(address);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Address created with ID: {Id}", address.Id);
@@ -90,7 +101,7 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Retrieving address {Id}", id);
 
-            var address = await _unitOfWork.Addresses.GetAddressByIdAsync(id);
+            var address = await _addressRepository.GetAddressByIdAsync(id);
             if (address == null)
             {
                 _logger.LogWarning("Address {Id} not found", id);
@@ -111,7 +122,7 @@ namespace bidify_be.Services.Implementations
 
             _logger.LogInformation("Retrieving addresses for user {UserId}", currentUserId);
 
-            var addresses = await _unitOfWork.Addresses.GetAddressesByUserIdAsync(currentUserId);
+            var addresses = await _addressRepository.GetAddressesByUserIdAsync(currentUserId.Value);
 
             return _mapper.Map<List<AddressResponse>>(addresses);
         }
@@ -123,7 +134,7 @@ namespace bidify_be.Services.Implementations
 
             _logger.LogInformation("Retrieving default address for user {UserId}", currentUserId);
 
-            var address = await _unitOfWork.Addresses.GetDefaultAddress(currentUserId);
+            var address = await _addressRepository.GetDefaultAddress(currentUserId.Value);
             if (address == null)
             {
                 throw new AddressNotFoundException("Default address not found");
@@ -140,7 +151,7 @@ namespace bidify_be.Services.Implementations
             var validation = await _updateValidator.ValidateAsync(request);
             ValidationHelper.ThrowIfInvalid(validation, _logger);
 
-            var address = await _unitOfWork.Addresses.GetAddressByIdAsync(id);
+            var address = await _addressRepository.GetAddressByIdAsync(id);
             if (address == null)
             {
                 throw new AddressNotFoundException($"Address {id} not found");
@@ -158,15 +169,15 @@ namespace bidify_be.Services.Implementations
             // If set default -> remove old default
             if (becomingDefault)
             {
-                var oldDefault = await _unitOfWork.Addresses.GetDefaultAddress(address.UserId);
+                var oldDefault = await _addressRepository.GetDefaultAddress(address.UserId);
                 if (oldDefault != null && oldDefault.Id != address.Id)
                 {
                     oldDefault.IsDefault = false;
-                    _unitOfWork.Addresses.UpdateAddress(oldDefault);
+                    _addressRepository.UpdateAddress(oldDefault);
                 }
             }
 
-            _unitOfWork.Addresses.UpdateAddress(address);
+            _addressRepository.UpdateAddress(address);
             await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<AddressResponse>(address);
@@ -177,7 +188,7 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Deleting address {Id}", id);
 
-            var address = await _unitOfWork.Addresses.GetAddressByIdAsync(id);
+            var address = await _addressRepository.GetAddressByIdAsync(id);
             if (address == null)
             {
                 _logger.LogWarning("Address {Id} not found", id);
@@ -187,7 +198,7 @@ namespace bidify_be.Services.Implementations
             var currentUserId = _currentUserService.GetUserId();
             AuthorizationHelper.EnsureSameUser(currentUserId, address.UserId);
 
-            _unitOfWork.Addresses.DeleteAddress(address);
+            _addressRepository.DeleteAddress(address);
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -196,7 +207,7 @@ namespace bidify_be.Services.Implementations
         {
             _logger.LogInformation("Setting default address: {Id}", id);
 
-            var address = await _unitOfWork.Addresses.GetAddressByIdAsync(id);
+            var address = await _addressRepository.GetAddressByIdAsync(id);
             if (address == null)
             {
                 _logger.LogWarning("Address {Id} not found", id);
@@ -212,16 +223,16 @@ namespace bidify_be.Services.Implementations
                 return;
             }
 
-            var oldDefault = await _unitOfWork.Addresses.GetDefaultAddress(address.UserId);
+            var oldDefault = await _addressRepository.GetDefaultAddress(address.UserId);
             if (oldDefault != null && oldDefault.Id != id)
             {
                 oldDefault.IsDefault = false;
-                _unitOfWork.Addresses.UpdateAddress(oldDefault);
+                _addressRepository.UpdateAddress(oldDefault);
             }
 
             address.UpdatedAt = DateTime.UtcNow;
 
-            _unitOfWork.Addresses.SetDefaultAddress(address);
+            _addressRepository.SetDefaultAddress(address);
 
             await _unitOfWork.SaveChangesAsync();
         }

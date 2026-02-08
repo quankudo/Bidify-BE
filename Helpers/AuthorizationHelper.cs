@@ -2,20 +2,19 @@
 {
     public static class AuthorizationHelper
     {
-        public static string EnsureSameUser(string? currentUserId, string targetUserId)
+        public static Guid EnsureSameUser(Guid? currentUserId, Guid targetUserId)
         {
-            if (string.IsNullOrWhiteSpace(currentUserId))
+            if (currentUserId == null || currentUserId == Guid.Empty)
             {
                 throw new UnauthorizedAccessException("You must be logged in to perform this action.");
             }
 
-            if (currentUserId != targetUserId)
+            if (currentUserId.Value != targetUserId)
             {
                 throw new UnauthorizedAccessException("You are not authorized to perform this action.");
             }
 
-            return currentUserId;
+            return currentUserId.Value;
         }
     }
-
 }

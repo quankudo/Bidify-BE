@@ -1,12 +1,13 @@
-﻿namespace bidify_be.Domain.Entities
+﻿using bidify_be.Domain.Abstractions;
+
+namespace bidify_be.Domain.Entities
 {
-    public class TransitionPackageBid
+    public class TransitionPackageBid : EntityBase<Guid>
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public Guid PackageBidId { get; set; }
         public decimal Price { get; set; }
         public int BidCount { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     }
 }

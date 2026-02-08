@@ -13,10 +13,19 @@ namespace bidify_be.Services.Implementations
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string? GetUserId()
+        public Guid? GetUserId()
         {
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            return userId;
+            var userIdString = _httpContextAccessor
+                .HttpContext?
+                .User?
+                .FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (Guid.TryParse(userIdString, out var userId))
+            {
+                return userId;
+            }
+
+            return null;
         }
 
         public bool IsAdmin()

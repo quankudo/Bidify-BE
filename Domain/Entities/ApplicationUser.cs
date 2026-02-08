@@ -1,10 +1,10 @@
-﻿using bidify_be.Domain.Enums;
+﻿using bidify_be.Domain.Abstractions.Entities;
+using bidify_be.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bidify_be.Domain.Entities
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser<Guid>, IDateTracking
     {
         public Gender? Gender { get; set; }
         public string? RefreshToken { get; set; }
@@ -17,16 +17,14 @@ namespace bidify_be.Domain.Entities
         public string? PublicId { get; set; }
         public string? ReferralCode { get; set; }
         public bool Status { get; set; } = true;
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Balance { get; set; } = 0;
-        [Column(TypeName = "decimal(3,2)")]
-        public decimal RateStar { get; set; } = 5;
+        public decimal Balance { get; set; }
+        public decimal RateStar { get; set; }
         public string? ReferredBy { get; set; }
-        public DateTime CreateAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdateAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
         public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
         public ICollection<BidsHistory> BidsHistories { get; set; } = new List<BidsHistory>();
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? UpdatedAt { get; set; }
     }
 }

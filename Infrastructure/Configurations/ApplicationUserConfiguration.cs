@@ -11,6 +11,18 @@ namespace bidify_be.Domain.Entities.Configurations
                    .WithOne()      
                    .HasForeignKey(a => a.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Property(u => u.Balance)
+                   .HasPrecision(18, 2);
+
+            builder.Property(u => u.RateStar)
+                   .HasPrecision(3, 2);
+
+            builder.Property(u => u.Balance)
+                   .HasDefaultValue(0);
+
+            builder.Property(u => u.RateStar)
+                   .HasDefaultValue(5);
         }
     }
 }
